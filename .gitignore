@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+.env
+
+# Data & Models
+data/raw/*
+!data/raw/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
+data/tiles/*
+!data/tiles/.gitkeep
+data/outputs/*
+!data/outputs/.gitkeep
+
+# Jupyter Notebooks
+.ipynb_checkpoints
+
+# IDEs & System
+.vscode/
+.idea/
+.DS_Store
+.env
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+data/processed/*
+data/tiles/*
+data/outputs/*
+!data/processed/.gitkeep
+!data/tiles/.gitkeep
+!data/outputs/.gitkeep
+.venv/
+*.png
+*.jpg
+*.jpeg
+*.tiff
+*.pdf
+!data/raw/.gitkeep
