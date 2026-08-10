@@ -1,4 +1,4 @@
-# Vector-PID 📐🤖
+# Vector-PID 
 
 **AI-Powered P&ID Topology Extraction & Semantic Reasoning Platform**
 
@@ -21,6 +21,8 @@ It combines **deterministic computer vision** (bidirectional tiling, vector line
 - [Repository Structure](#-repository-structure)
 - [Installation & Setup](#-installation--setup)
 - [Usage & Execution Guide](#-usage--execution-guide)
+- [Web Platform (API + React UI)](#-web-platform-api--react-ui)
+- [REST API Reference](#-rest-api-reference)
 - [Data Schemas & JSON Output Artifacts](#-data-schemas--json-output-artifacts)
 - [Testing & Quality Assurance](#-testing--quality-assurance)
 - [Honesty Disclosures & Model Limitations](#-honesty-disclosures--model-limitations)
@@ -39,6 +41,7 @@ Traditional single-pass OCR and generic vision models fail due to memory limits,
 2. **Deterministic Extraction**: Extracts text via EasyOCR, lines via Hough Transform with collinear segment merging, and symbols via shape contour analysis.
 3. **Structured Spatial Topology**: Connects text annotations to physical components and builds a NetworkX topology graph representing piping flow and connectivity.
 4. **Grounded LLM Reasoning**: Feeds structured sub-contexts into Grok LLM to answer complex process engineering queries without hallucinating equipment tags or dimensions.
+5. **Interactive Web Viewer**: React + Three.js canvas with topology graph explorer, JSON inspector, and live Grok Q&A — connected to the Python pipeline via FastAPI.
 
 ---
 
@@ -93,6 +96,18 @@ Traditional single-pass OCR and generic vision models fail due to memory limits,
                                   +-----------+-----------+
                                   |     GrokService LLM   |
                                   | (Grounded QA & Trace) |
+                                  +-----------+-----------+
+                                              |
+                                              v
+                                  +-----------+-----------+
+                                  |   FastAPI REST Server |
+                                  |  (Upload, Graph, Chat)|
+                                  +-----------+-----------+
+                                              |
+                                              v
+                                  +-----------+-----------+
+                                  |  React + Three.js UI  |
+                                  | (Canvas, Graph, JSON) |
                                   +-----------------------+
 ```
 
@@ -112,6 +127,7 @@ Traditional single-pass OCR and generic vision models fail due to memory limits,
 | **Step 10** | `src.graph.drawing_graph` | Constructs NetworkX `nx.Graph` linking objects, lines, and text. Enables BFS path tracing (`trace_from_object`). | `data/outputs/graph.json` |
 | **Step 11** | `src.services.grok_service` | OpenAI-compatible Grok API client with strict system prompt enforcement, relevant sub-context retrieval, and automated 429 rate-limit backoff retry. | Natural language QA responses |
 | **Step 12** | `src.pipeline.drawing_pipeline` | Single entry point (`analyze_drawing()`) orchestrating all stages and exporting 7 structured JSON artifacts. | `data/outputs/final_analysis.json` |
+| **Step 13** | `src.api.main` | FastAPI server exposing upload, analysis retrieval, graph export, and Grok chat to the React client. | REST JSON over HTTP |
 
 ---
 
@@ -134,7 +150,16 @@ engineering-drawing-intelligence/
 │   ├── preprocessing/           # Image processor, PDF renderer, TileManager
 │   ├── services/                # GrokService LLM reasoning integration
 │   ├── spatial/                 # Spatial reasoning & relationship extraction
+│   ├── api/                     # FastAPI REST server (Step 13)
 │   └── utils/                   # Visualization helpers
+│
+├── client/                      # React + Vite + Three.js web UI
+│   ├── src/
+│   │   ├── components/          # Canvas, GraphExplorer, AiChatDrawer, DataInspector
+│   │   ├── lib/                 # pidScene.js (Three.js), api.js, normalizeAnalysis.js
+│   │   └── data/                # Sample fallback dataset
+│   ├── package.json
+│   └── vite.config.js           # Dev proxy: /api → localhost:8000
 │
 ├── scripts/                     # Standalone CLI execution scripts
 │   ├── 03_tiling.py             # Test tiling grid generation
@@ -145,7 +170,8 @@ engineering-drawing-intelligence/
 │   ├── 08_spatial_reasoning.py  # Extract spatial relationships
 │   ├── 09_graph_construction.py # Build NetworkX topology graph
 │   ├── 10_grok_analysis.py      # Run Grok LLM QA test suite
-│   └── 11_end_to_end_pipeline.py# Execute full end-to-end pipeline
+│   ├── 11_end_to_end_pipeline.py# Execute full end-to-end pipeline
+│   └── run_api.py               # Start FastAPI server (port 8000)
 │
 ├── tests/                       # Unit test suite (72 tests)
 │   ├── test_drawing_graph.py
@@ -171,6 +197,7 @@ engineering-drawing-intelligence/
 
 ### Prerequisites
 - **Python**: 3.10 or higher
+- **Node.js**: 18+ *(for the React web client)*
 - **Poppler Utilities** *(required for PDF rendering)*:
   - **Linux**: `sudo apt-get install poppler-utils`
   - **macOS**: `brew install poppler`
@@ -190,7 +217,10 @@ source .venv/bin/activate  # Windows: .venv\Scripts\activate
 # 3. Install Python dependencies
 pip install -r requirements.txt
 
-# 4. Configure environment variables
+# 4. Install web client dependencies
+cd client && npm install && cd ..
+
+# 5. Configure environment variables
 cp .env.example .env
 ```
 
@@ -232,6 +262,74 @@ python scripts/09_graph_construction.py
 
 # Run Grok LLM Reasoning QA
 python scripts/10_grok_analysis.py
+```
+
+---
+
+## 🌐 Web Platform (API + React UI)
+
+The React client talks to the Python pipeline through a FastAPI server. Upload a P&ID, run the full CV pipeline in the background, then explore results in an interactive Three.js canvas.
+
+### Quick Start (two terminals)
+
+**Terminal 1 — API server** (from project root):
+```bash
+python scripts/run_api.py
+```
+Server runs at `http://localhost:8000`. On startup it auto-loads `data/outputs/final_analysis.json` if present.
+
+**Terminal 2 — Web client**:
+```bash
+cd client
+npm run dev
+```
+Open the URL Vite prints (usually `http://localhost:5173`). The Vite dev proxy forwards `/api/*` to port 8000.
+
+### UI Features
+
+| Tab | Description |
+| :--- | :--- |
+| **Canvas** | Three.js P&ID viewer — 3D pipe tubes, symbol meshes, zoom-based label decluttering, minimap, layer toggles |
+| **Graph** | Topology explorer with BFS path tracer and searchable node directory |
+| **Ask AI** | Grounded Grok Q&A against the loaded analysis (requires `GROK_API_KEY`) |
+| **Data** | Raw JSON artifact inspector with copy/download |
+
+### Upload Flow
+
+1. Click **Upload** in the navbar and select a `.pdf` or image (`.png`, `.jpg`, `.tif`, `.bmp`).
+2. The API returns a `job_id`; the client polls until the pipeline completes.
+3. Results populate all tabs from `final_analysis.json` structure.
+4. Without the API running, the UI falls back to bundled sample data.
+
+> **Note:** Full pipeline analysis on large P&IDs can take several minutes (OCR + line/symbol detection). Keep the API terminal open while jobs run.
+
+---
+
+## 🔌 REST API Reference
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `GET` | `/api/v1/health` | Server status, whether analysis is loaded, Grok key configured |
+| `GET` | `/api/v1/analysis` | Full `final_analysis.json` payload |
+| `GET` | `/api/v1/graph` | NetworkX graph export only |
+| `POST` | `/api/v1/analyze` | Upload drawing file → returns `{ job_id, status: "pending" }` |
+| `GET` | `/api/v1/jobs/{job_id}` | Poll job status; `completed` includes `result` |
+| `POST` | `/api/v1/chat` | Body: `{ "question": "..." }` → grounded Grok answer + cited source IDs |
+
+**Example — upload and poll:**
+```bash
+curl -X POST http://localhost:8000/api/v1/analyze -F "file=@data/raw/your-drawing.pdf"
+# → {"job_id":"...","status":"pending"}
+
+curl http://localhost:8000/api/v1/jobs/<job_id>
+# → {"status":"completed","result":{...}}
+```
+
+**Example — chat:**
+```bash
+curl -X POST http://localhost:8000/api/v1/chat \
+  -H "Content-Type: application/json" \
+  -d '{"question":"List all equipment tags"}'
 ```
 
 ---
@@ -329,9 +427,10 @@ docker run --rm --env-file .env -v "${PWD}/data/outputs:/app/data/outputs" vecto
 ## 🛣️ Production Roadmap
 
 - [ ] **YOLOv8 / RT-DETR Symbol Detector**: Replace OpenCV contour detector with a fine-tuned deep learning model trained on ISO 14617 / ANSI P&ID symbol datasets (>85% mAP).
-- [ ] **FastAPI REST Server**: Expose `POST /api/v1/analyze`, `GET /api/v1/graph`, and `POST /api/v1/chat` endpoints.
-- [ ] **React SVG Canvas UI**: Interactive web viewer with bounding box toggle overlays and click-to-trace line highlighting.
+- [x] **FastAPI REST Server**: `POST /api/v1/analyze`, `GET /api/v1/graph`, `POST /api/v1/chat`, job polling.
+- [x] **React Three.js Canvas UI**: Interactive web viewer with layer toggles, topology graph, JSON inspector, and Grok chat.
 - [ ] **Multi-Sheet PDF Linker**: Parse matchline text (`SEE DWG-XXXX`) to link cross-drawing process flows into a unified graph.
+- [ ] **Production CORS & Auth**: Token-based API auth and configurable allowed origins for deployed frontends.
 
 ---
 
