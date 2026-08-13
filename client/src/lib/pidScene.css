@@ -1,0 +1,83 @@
+/* Three.js CSS2D overlay styles for P&ID canvas */
+.pid-label {
+  pointer-events: auto;
+  border: 1px solid #cfd5dc;
+  background: #ffffff;
+  color: #14181f;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 10px;
+  line-height: 1.2;
+  padding: 2px 5px;
+  border-radius: 3px;
+  white-space: nowrap;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(20, 24, 31, 0.06);
+  transform: translate(-50%, -50%);
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.pid-label:hover {
+  border-color: #0f6e56;
+  box-shadow: 0 4px 12px rgba(20, 24, 31, 0.1);
+}
+
+.pid-label--instrument {
+  background: #e6f4ef;
+  color: #0f6e56;
+  border-color: #b7dccf;
+}
+
+.pid-label--equipment {
+  background: #eef1f4;
+  color: #1c2430;
+  border-color: #cfd5dc;
+}
+
+.pid-label--line {
+  background: #eef6ff;
+  color: #1d4ed8;
+  border-color: #c7d7fe;
+}
+
+.pid-label--desc {
+  background: #fff7ed;
+  color: #b45309;
+  border-color: #fed7aa;
+}
+
+.pid-label--service {
+  background: #f0f9ff;
+  color: #0369a1;
+  border-color: #bae6fd;
+}
+
+.pid-label--note {
+  background: #fef2f2;
+  color: #b42318;
+  border-color: #fecaca;
+}
+
+.pid-label--spec {
+  background: #f5f3ff;
+  color: #5b21b6;
+  border-color: #ddd6fe;
+}
+
+.pid-symbol-badge {
+  pointer-events: none;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #ffffff;
+  background: #1c2430;
+  padding: 2px 6px;
+  border-radius: 3px;
+  transform: translate(-50%, -100%);
+  white-space: nowrap;
+  opacity: 0.9;
+}

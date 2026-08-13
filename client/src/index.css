@@ -1,31 +1,33 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 @import "tailwindcss";
 
 :root {
-  --bg-dark: #070A12;
-  --bg-card: #111827;
-  --bg-card-hover: #1F2937;
-  --bg-surface: #1E293B;
-  
-  --border-color: #1F2937;
-  --border-highlight: #374151;
-  
-  --text-primary: #F9FAFB;
-  --text-secondary: #9CA3AF;
-  --text-muted: #6B7280;
+  --bg: #f4f6f8;
+  --bg-elevated: #ffffff;
+  --bg-muted: #eef1f4;
+  --bg-canvas: #e8ecf0;
 
-  --accent-cyan: #06B6D4;
-  --accent-cyan-glow: rgba(6, 182, 212, 0.25);
-  --accent-emerald: #10B981;
-  --accent-emerald-glow: rgba(16, 185, 129, 0.25);
-  --accent-purple: #8B5CF6;
-  --accent-purple-glow: rgba(139, 92, 246, 0.25);
-  --accent-amber: #F59E0B;
-  --accent-amber-glow: rgba(245, 158, 11, 0.25);
-  --accent-rose: #F43F5E;
-  
-  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --border: #e2e6eb;
+  --border-strong: #cfd5dc;
+
+  --text: #14181f;
+  --text-secondary: #5c6570;
+  --text-muted: #8b949e;
+
+  --accent: #0f6e56;
+  --accent-soft: #e6f4ef;
+  --accent-hover: #0b5a46;
+
+  --ink: #1c2430;
+  --warn: #b45309;
+  --danger: #b42318;
+
+  --font-sans: 'Outfit', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --radius: 10px;
+  --shadow-sm: 0 1px 2px rgba(20, 24, 31, 0.04);
+  --shadow-md: 0 8px 24px rgba(20, 24, 31, 0.06);
 }
 
 * {
@@ -34,52 +36,81 @@
   padding: 0;
 }
 
+html,
+body,
+#root {
+  height: 100%;
+}
+
 body {
-  background-color: var(--bg-dark);
-  color: var(--text-primary);
+  background: var(--bg);
+  color: var(--text);
   font-family: var(--font-sans);
-  overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
-/* Glassmorphism utility */
-.glass-panel {
-  background: rgba(17, 24, 39, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 12px;
+/* Soft paper grain — atmosphere without noise */
+.app-shell {
+  min-height: 100%;
+  background:
+    radial-gradient(1200px 600px at 10% -10%, rgba(15, 110, 86, 0.06), transparent 55%),
+    radial-gradient(900px 500px at 100% 0%, rgba(28, 36, 48, 0.04), transparent 50%),
+    var(--bg);
 }
 
-/* Custom Scrollbars */
+.panel {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+}
+
+.panel-quiet {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(0, 0, 0, 0.2);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
-  border-radius: 4px;
+  background: rgba(20, 24, 31, 0.15);
+  border-radius: 99px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(20, 24, 31, 0.28);
 }
 
-/* Pulse animation */
-@keyframes pulseGlow {
-  0%, 100% {
-    box-shadow: 0 0 15px var(--accent-cyan-glow);
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
   }
-  50% {
-    box-shadow: 0 0 25px rgba(6, 182, 212, 0.5);
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-.animate-glow {
-  animation: pulseGlow 3s infinite ease-in-out;
+.animate-in {
+  animation: fadeUp 0.35s ease-out both;
+}
+
+@keyframes softPulse {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+
+.typing-dot {
+  animation: softPulse 1.2s ease-in-out infinite;
 }
