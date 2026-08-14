@@ -18,7 +18,7 @@ from src.spatial.relationship_engine import RelationshipEngine
 
 
 def analyze_drawing(image_path: str | Path, output_dir: str | Path = "data/outputs") -> dict[str, Any]:
-    """Execute complete 12-step drawing analysis pipeline on input PDF or raster drawing.
+    """Execute complete drawing analysis pipeline on input PDF or raster drawing.
 
     Parameters
     ----------
@@ -31,7 +31,7 @@ def analyze_drawing(image_path: str | Path, output_dir: str | Path = "data/outpu
     -------
     dict
         Structured analysis output containing metadata, texts, objects, lines, connections,
-        graph, and statistics.
+        graph, ai_reasoning, and statistics.
     """
     image_path = Path(image_path)
     output_dir = Path(output_dir)
@@ -90,7 +90,12 @@ def analyze_drawing(image_path: str | Path, output_dir: str | Path = "data/outpu
     graph_dict = drawing_graph.to_dict()
     (output_dir / "graph.json").write_text(json.dumps(graph_dict, indent=2))
 
-    # 10. Assemble statistics & final JSON
+    # 10. AI Reasoning Layer (Gemini Vision)
+    ai_reasoning_data = _run_ai_reasoning(
+        img, classified_data, enriched_objects, lines_data, rels_data, output_dir
+    )
+
+    # 11. Assemble statistics & final JSON
     text_class_counts = dict(Counter(t.classification.value for t in classified_texts))
     symbol_counts = dict(Counter(o.type for o in objects))
     line_counts = dict(Counter(l.line_type for l in lines))
@@ -103,6 +108,8 @@ def analyze_drawing(image_path: str | Path, output_dir: str | Path = "data/outpu
         "total_lines": len(lines),
         "line_types": line_counts,
         "total_relationships": len(relationships),
+        "ai_reasoning_connections": len(ai_reasoning_data.get("connections", [])),
+        "ai_reasoning_flows": len(ai_reasoning_data.get("process_flows", [])),
     }
 
     final_result = {
@@ -117,9 +124,44 @@ def analyze_drawing(image_path: str | Path, output_dir: str | Path = "data/outpu
         "lines": lines_data,
         "connections": rels_data,
         "graph": graph_dict,
+        "ai_reasoning": ai_reasoning_data,
         "statistics": statistics,
     }
 
     (output_dir / "final_analysis.json").write_text(json.dumps(final_result, indent=2))
 
     return final_result
+
+
+def _run_ai_reasoning(
+    image,
+    texts: list[dict],
+    objects: list[dict],
+    lines: list[dict],
+    relationships: list[dict],
+    output_dir: Path,
+) -> dict:
+    """Run Gemini Vision AI reasoning. Returns empty structure on failure or missing key."""
+    try:
+        from src.services.gemini_service import GeminiReasoningService
+
+        print("[Pipeline] Starting Gemini Vision AI reasoning...")
+        gemini = GeminiReasoningService()
+        result = gemini.reason_about_connections(
+            image=image,
+            texts=texts,
+            objects=objects,
+            lines=lines,
+            relationships=relationships,
+        )
+        (output_dir / "ai_reasoning.json").write_text(json.dumps(result, indent=2))
+        num_conns = len(result.get("connections", []))
+        num_flows = len(result.get("process_flows", []))
+        print(f"[Pipeline] AI reasoning complete: {num_conns} connections, {num_flows} process flows")
+        return result
+    except EnvironmentError as exc:
+        print(f"[Pipeline] Gemini API key not configured, skipping AI reasoning: {exc}")
+        return {"drawing_summary": "AI reasoning skipped — GEMINI_API_KEY not set", "connections": [], "process_flows": []}
+    except Exception as exc:
+        print(f"[Pipeline] AI reasoning failed: {exc}")
+        return {"drawing_summary": f"AI reasoning error: {exc}", "connections": [], "process_flows": []}

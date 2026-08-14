@@ -75,3 +75,39 @@ class SpatialRelationship(BaseModel):
     relationship: str  # "near", "connected_to", "annotated_by", "flows_to"
     distance: float
     confidence: float = Field(..., ge=0, le=1)
+
+
+# --- AI Reasoning Models (Gemini Vision Output) ---
+
+class AIConnectionComponent(BaseModel):
+    """A component involved in an AI-reasoned connection."""
+    id: str = ""
+    tag: str = ""
+    type: str = ""
+
+
+class AIConnection(BaseModel):
+    """A single AI-reasoned connection between two drawing components."""
+    from_component: AIConnectionComponent
+    to_component: AIConnectionComponent
+    connection_type: str = ""          # "pipe", "signal", "instrument", etc.
+    flow_direction: str = ""           # e.g., "P-200 → V-100"
+    reason: str = ""                   # Engineering reasoning
+    confidence: float = Field(default=0.5, ge=0, le=1)
+    line_ids: list[str] = Field(default_factory=list)
+
+
+class ProcessFlow(BaseModel):
+    """An AI-identified process flow path through the drawing."""
+    flow_name: str = ""
+    path: list[str] = Field(default_factory=list)
+    description: str = ""
+
+
+class AIReasoning(BaseModel):
+    """Complete AI reasoning output for a P&ID drawing."""
+    drawing_summary: str = ""
+    connections: list[AIConnection] = Field(default_factory=list)
+    process_flows: list[ProcessFlow] = Field(default_factory=list)
+    ai_model: str = "gemini-2.5-flash"
+    timestamp: str = ""
