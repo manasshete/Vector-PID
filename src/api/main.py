@@ -76,7 +76,6 @@ def health() -> dict:
         "status": "ok",
         "has_analysis": current is not None,
         "grok_configured": bool(os.getenv("GROK_API_KEY")),
-        "gemini_configured": bool(os.getenv("GEMINI_API_KEY")) and os.getenv("GEMINI_API_KEY") != "your_gemini_api_key_here",
     }
 
 

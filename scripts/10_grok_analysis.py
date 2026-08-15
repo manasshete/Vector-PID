@@ -47,6 +47,12 @@ async def main_async():
         "Summarize the process flow between inlet header and export compressor.",
     ]
 
+    # Collect results for saving to file
+    grok_output = {
+        "drawing_summary": None,
+        "qa_pairs": [],
+    }
+
     print("================================================================================")
     print("  GROK REASONING & QA TEST")
     print("================================================================================\n")
@@ -55,11 +61,13 @@ async def main_async():
         grok = GrokService()
         try:
             summary = await grok.summarize_drawing(context)
+            grok_output["drawing_summary"] = summary
             print(f"[+] Drawing Scope Summary:\n{summary}\n")
 
             for i, q in enumerate(questions, 1):
                 print(f"[Q{i}] {q}")
                 ans = await grok.answer_question(q, context)
+                grok_output["qa_pairs"].append({"question": q, "answer": ans})
                 print(f"[A{i}] {ans}\n" + "-" * 60)
                 await asyncio.sleep(2.5)
 
@@ -67,12 +75,20 @@ async def main_async():
             await grok.close()
     else:
         # Mock dry run mode when API key is absent
-        print("[+] Drawing Scope Summary (Dry Run):")
-        print("This process drawing details the 3rd Stage HP Gas Export Compressor system, including inlet headers, instrument transmitters (PIT-9087), and associated process piping.\n")
+        mock_summary = "This process drawing details the 3rd Stage HP Gas Export Compressor system, including inlet headers, instrument transmitters (PIT-9087), and associated process piping."
+        grok_output["drawing_summary"] = mock_summary
+        print(f"[+] Drawing Scope Summary (Dry Run):\n{mock_summary}\n")
 
         for i, q in enumerate(questions, 1):
+            mock_answer = f"[Mock Grok Response] Retrieved relevant sub-context for query '{q}'. (Set GROK_API_KEY to test live LLM endpoint)."
+            grok_output["qa_pairs"].append({"question": q, "answer": mock_answer})
             print(f"[Q{i}] {q}")
-            print(f"[A{i}] [Mock Grok Response] Retrieved relevant sub-context for query '{q}'. (Set GROK_API_KEY to test live LLM endpoint).\n" + "-" * 60)
+            print(f"[A{i}] {mock_answer}\n" + "-" * 60)
+
+    # Save Grok output to data/outputs/
+    grok_output_path = out_dir / "grok_analysis.json"
+    grok_output_path.write_text(json.dumps(grok_output, indent=2))
+    print(f"\n[+] Grok analysis saved to {grok_output_path}")
 
 
 def main():

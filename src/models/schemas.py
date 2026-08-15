@@ -109,5 +109,5 @@ class AIReasoning(BaseModel):
     drawing_summary: str = ""
     connections: list[AIConnection] = Field(default_factory=list)
     process_flows: list[ProcessFlow] = Field(default_factory=list)
-    ai_model: str = "gemini-2.5-flash"
+    ai_model: str = "llama-3.3-70b-versatile"
     timestamp: str = ""

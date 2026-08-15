@@ -141,13 +141,13 @@ def _run_ai_reasoning(
     relationships: list[dict],
     output_dir: Path,
 ) -> dict:
-    """Run Gemini Vision AI reasoning. Returns empty structure on failure or missing key."""
+    """Run AI reasoning via Groq LLM. Returns empty structure on failure or missing key."""
     try:
         from src.services.gemini_service import GeminiReasoningService
 
-        print("[Pipeline] Starting Gemini Vision AI reasoning...")
-        gemini = GeminiReasoningService()
-        result = gemini.reason_about_connections(
+        print("[Pipeline] Starting AI connection reasoning (Groq LLM)...")
+        reasoner = GeminiReasoningService()
+        result = reasoner.reason_about_connections(
             image=image,
             texts=texts,
             objects=objects,
@@ -160,8 +160,9 @@ def _run_ai_reasoning(
         print(f"[Pipeline] AI reasoning complete: {num_conns} connections, {num_flows} process flows")
         return result
     except EnvironmentError as exc:
-        print(f"[Pipeline] Gemini API key not configured, skipping AI reasoning: {exc}")
-        return {"drawing_summary": "AI reasoning skipped — GEMINI_API_KEY not set", "connections": [], "process_flows": []}
+        print(f"[Pipeline] GROK_API_KEY not configured, skipping AI reasoning: {exc}")
+        return {"drawing_summary": "AI reasoning skipped — GROK_API_KEY not set", "connections": [], "process_flows": []}
     except Exception as exc:
         print(f"[Pipeline] AI reasoning failed: {exc}")
         return {"drawing_summary": f"AI reasoning error: {exc}", "connections": [], "process_flows": []}
+

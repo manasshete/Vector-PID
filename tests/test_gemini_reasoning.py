@@ -1,4 +1,4 @@
-"""Unit tests for the Gemini AI reasoning layer."""
+"""Unit tests for the AI reasoning layer."""
 from __future__ import annotations
 
 import json
@@ -79,12 +79,12 @@ class TestAIReasoningModels:
             process_flows=[
                 ProcessFlow(flow_name="Main Flow", path=["A", "B", "C"], description="Test flow")
             ],
-            ai_model="gemini-2.5-flash",
+            ai_model="llama-3.3-70b-versatile",
             timestamp="2026-08-14T00:00:00Z",
         )
         assert len(reasoning.connections) == 1
         assert len(reasoning.process_flows) == 1
-        assert reasoning.ai_model == "gemini-2.5-flash"
+        assert reasoning.ai_model == "llama-3.3-70b-versatile"
 
     def test_ai_reasoning_serialization(self):
         """Test JSON round-trip serialization."""
@@ -116,33 +116,11 @@ class TestAIReasoningModels:
         assert reasoning.process_flows == []
 
 
-# --- Gemini Service Tests (Mocked) ---
+# --- AI Reasoning Service Tests ---
 
 
-class TestGeminiServiceHelpers:
-    """Test helper functions from gemini_service without API calls."""
-
-    def test_resize_for_gemini_no_resize_needed(self):
-        from src.services.gemini_service import _resize_for_gemini
-
-        small_img = np.zeros((500, 800, 3), dtype=np.uint8)
-        result = _resize_for_gemini(small_img)
-        assert result.shape == (500, 800, 3)
-
-    def test_resize_for_gemini_large_image(self):
-        from src.services.gemini_service import _resize_for_gemini
-
-        large_img = np.zeros((5000, 3500, 3), dtype=np.uint8)
-        result = _resize_for_gemini(large_img, max_dim=2048)
-        assert max(result.shape[:2]) <= 2048
-
-    def test_image_to_base64(self):
-        from src.services.gemini_service import _image_to_base64
-
-        img = np.zeros((100, 100, 3), dtype=np.uint8)
-        b64 = _image_to_base64(img)
-        assert isinstance(b64, str)
-        assert len(b64) > 0
+class TestAIReasoningServiceHelpers:
+    """Test helper functions from the reasoning service without API calls."""
 
     def test_build_context_text_with_data(self):
         from src.services.gemini_service import _build_context_text
@@ -168,21 +146,14 @@ class TestGeminiServiceHelpers:
         assert context == ""
 
 
-class TestGeminiServiceInit:
+class TestAIReasoningServiceInit:
     """Test GeminiReasoningService initialization."""
 
     def test_missing_api_key_raises(self):
         from src.services.gemini_service import GeminiReasoningService
 
-        with patch.dict("os.environ", {"GEMINI_API_KEY": ""}, clear=False):
-            with pytest.raises(EnvironmentError, match="GEMINI_API_KEY"):
-                GeminiReasoningService()
-
-    def test_placeholder_key_raises(self):
-        from src.services.gemini_service import GeminiReasoningService
-
-        with patch.dict("os.environ", {"GEMINI_API_KEY": "your_gemini_api_key_here"}, clear=False):
-            with pytest.raises(EnvironmentError, match="GEMINI_API_KEY"):
+        with patch.dict("os.environ", {"GROK_API_KEY": ""}, clear=False):
+            with pytest.raises(EnvironmentError, match="GROK_API_KEY"):
                 GeminiReasoningService()
 
 
@@ -194,7 +165,7 @@ class TestPipelineIntegration:
         from pathlib import Path
         import tempfile
 
-        with patch.dict("os.environ", {"GEMINI_API_KEY": ""}, clear=False):
+        with patch.dict("os.environ", {"GROK_API_KEY": ""}, clear=False):
             img = np.zeros((100, 100, 3), dtype=np.uint8)
             result = _run_ai_reasoning(img, [], [], [], [], Path(tempfile.mkdtemp()))
 

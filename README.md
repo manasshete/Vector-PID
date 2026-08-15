@@ -4,13 +4,13 @@
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![PyTest Status](https://img.shields.io/badge/tests-88%20passed-brightgreen.svg)]()
-[![Gemini AI](https://img.shields.io/badge/AI_Reasoning-Gemini_2.5_Flash-4285F4.svg)](https://ai.google.dev/)
+[![AI Reasoning](https://img.shields.io/badge/AI_Reasoning-Groq_LLM-orange.svg)](https://groq.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Architecture: Modular](https://img.shields.io/badge/architecture-Python--First-orange.svg)]()
 
 **Vector-PID** is an enterprise-grade, end-to-end computer vision and semantic AI framework designed to process, extract, and reason over ultra-high-resolution Piping and Instrumentation Diagrams (P&IDs) and engineering schematics.
 
-It combines **deterministic computer vision** (bidirectional tiling, vector line detection, contour analysis, and regex text classification) with **graph topology construction** (NetworkX), **Gemini Vision AI reasoning** (Google Gemini 2.5 Flash), and **LLM semantic reasoning** (Grok API) to turn static engineering drawings into queryable digital twin data structures.
+It combines **deterministic computer vision** (bidirectional tiling, vector line detection, contour analysis, and regex text classification) with **graph topology construction** (NetworkX) and **LLM-powered AI reasoning & semantic Q&A** (Groq API) to turn static engineering drawings into queryable digital twin data structures.
 
 ---
 
@@ -41,7 +41,7 @@ Traditional single-pass OCR and generic vision models fail due to memory limits,
 1. **Zero-Drift Tiling**: Splits drawings into overlapping 1024×1024 tiles with 100% loss-free bidirectional coordinate mapping (`local ⇄ global`).
 2. **Deterministic Extraction**: Extracts text via EasyOCR, lines via Hough Transform with collinear segment merging, and symbols via shape contour analysis.
 3. **Structured Spatial Topology**: Connects text annotations to physical components and builds a NetworkX topology graph representing piping flow and connectivity.
-4. **Gemini Vision AI Reasoning**: Sends the actual P&ID image + all structured CV data to Google Gemini 2.5 Flash, producing a structured JSON explaining which parts connect to which, why they connect (engineering reasoning), and what process flows exist.
+4. **AI Connection Reasoning**: Feeds all structured CV data into Groq LLM, producing a structured JSON explaining which parts connect to which, why they connect (engineering reasoning), and what process flows exist.
 5. **Grounded LLM Reasoning**: Feeds structured sub-contexts into Grok LLM to answer complex process engineering queries without hallucinating equipment tags or dimensions.
 6. **Interactive Web Viewer**: React + Three.js canvas with topology graph explorer, JSON inspector, and live Grok Q&A — connected to the Python pipeline via FastAPI.
 
@@ -96,7 +96,7 @@ Traditional single-pass OCR and generic vision models fail due to memory limits,
                                               |
                                               v
                                   +-----------+-----------+
-                                  | Gemini Vision AI      |
+                                  |  AI Reasoning (Groq)  |
                                   | (Connection Reasoning)|
                                   +-----------+-----------+
                                               |
@@ -133,7 +133,7 @@ Traditional single-pass OCR and generic vision models fail due to memory limits,
 | **Step 8** | `src.detection.symbol_detector` | OpenCV contour shape heuristics for symbol classification (`VALVE`, `PUMP`, `TANK`, `INSTRUMENT`, `FLANGE`, `EQUIPMENT`). | `data/outputs/objects.json` |
 | **Step 9** | `src.spatial.relationship_engine` | Deduplicates tile-overlap text, computes Euclidean proximity between symbols and text (`annotated_by`), and associates line endpoints to symbols (`connected_to`). | `data/outputs/relationships.json` |
 | **Step 10** | `src.graph.drawing_graph` | Constructs NetworkX `nx.Graph` linking objects, lines, and text. Enables BFS path tracing (`trace_from_object`). | `data/outputs/graph.json` |
-| **Step 11** | `src.services.gemini_service` | **🆕 Gemini Vision AI reasoning** — sends the P&ID image + all CV data to Google Gemini 2.5 Flash. Produces structured JSON with connection reasoning, engineering explanations, and process flow paths. | `data/outputs/ai_reasoning.json` |
+| **Step 11** | `src.services.gemini_service` | **AI connection reasoning** — sends all structured CV data to Groq LLM (same API key as Grok). Produces structured JSON with connection reasoning, engineering explanations, and process flow paths. | `data/outputs/ai_reasoning.json` |
 | **Step 12** | `src.services.grok_service` | OpenAI-compatible Grok API client with strict system prompt enforcement, relevant sub-context retrieval, and automated 429 rate-limit backoff retry. | Natural language QA responses |
 | **Step 13** | `src.pipeline.drawing_pipeline` | Single entry point (`analyze_drawing()`) orchestrating all stages and exporting 8 structured JSON artifacts. | `data/outputs/final_analysis.json` |
 | **Step 14** | `src.api.main` | FastAPI server exposing upload, analysis retrieval, graph export, AI reasoning, and Grok chat to the React client. | REST JSON over HTTP |
@@ -157,7 +157,7 @@ engineering-drawing-intelligence/
 │   ├── ocr/                     # EasyOCR engine & rule-based TextClassifier
 │   ├── pipeline/                # End-to-end orchestration (analyze_drawing)
 │   ├── preprocessing/           # Image processor, PDF renderer, TileManager
-│   ├── services/                # GrokService LLM + GeminiReasoningService Vision AI
+│   ├── services/                # GrokService LLM Q&A + AI Connection Reasoning
 │   ├── spatial/                 # Spatial reasoning & relationship extraction
 │   ├── api/                     # FastAPI REST server (Step 14)
 │   └── utils/                   # Visualization helpers
@@ -236,14 +236,10 @@ cp .env.example .env
 
 Edit `.env` to add your API credentials:
 ```env
-# Grok / Groq LLM (for chat Q&A)
+# Groq LLM (used for both chat Q&A and AI connection reasoning)
 GROK_API_KEY=your_groq_api_key_here
 GROK_BASE_URL=https://api.groq.com/openai/v1
 GROK_MODEL=llama-3.3-70b-versatile
-
-# Gemini Vision AI (for connection reasoning)
-# Get a free key at: https://aistudio.google.com/apikey
-GEMINI_API_KEY=your_gemini_api_key_here
 ```
 
 ---
@@ -255,7 +251,7 @@ Place your target PDF in `data/raw/` and execute:
 ```bash
 python scripts/11_end_to_end_pipeline.py
 ```
-This generates all 8 structured JSON artifacts in `data/outputs/`, including `ai_reasoning.json` with Gemini Vision AI connection analysis.
+This generates all 8 structured JSON artifacts in `data/outputs/`, including `ai_reasoning.json` with AI connection reasoning.
 
 ### 2. Run Individual Pipeline Stages
 
@@ -327,7 +323,7 @@ Open the URL Vite prints (usually `http://localhost:5173`). The Vite dev proxy f
 | `GET` | `/api/v1/health` | Server status, whether analysis is loaded, Grok & Gemini keys configured |
 | `GET` | `/api/v1/analysis` | Full `final_analysis.json` payload (includes `ai_reasoning`) |
 | `GET` | `/api/v1/graph` | NetworkX graph export only |
-| `GET` | `/api/v1/reasoning` | 🆕 AI reasoning JSON — connection explanations & process flows from Gemini Vision |
+| `GET` | `/api/v1/reasoning` | AI reasoning JSON — connection explanations & process flows from Groq LLM |
 | `POST` | `/api/v1/analyze` | Upload drawing file → returns `{ job_id, status: "pending" }` |
 | `GET` | `/api/v1/jobs/{job_id}` | Poll job status; `completed` includes `result` |
 | `POST` | `/api/v1/chat` | Body: `{ "question": "..." }` → grounded Grok answer + cited source IDs |
@@ -366,7 +362,7 @@ Execution of `analyze_drawing()` exports 8 intermediate and final JSON files to 
 4. **`objects.json`**: Enriched symbol detections with associated nearest text metadata.
 5. **`relationships.json`**: Extracted topology pairs (`from_id`, `to_id`, `relationship`, `distance`, `confidence`).
 6. **`graph.json`**: Full NetworkX graph export with node/edge attribute maps.
-7. **`ai_reasoning.json`**: 🆕 Gemini Vision AI structured reasoning — connection explanations with engineering rationale and process flow paths.
+7. **`ai_reasoning.json`**: AI structured reasoning — connection explanations with engineering rationale and process flow paths.
 8. **`final_analysis.json`**: Consolidated single JSON payload containing the complete drawing intelligence model (including `ai_reasoning`).
 
 ### Key Schema Snippet (`DetectedLine` & `SpatialRelationship`)
@@ -448,7 +444,7 @@ python -m pytest tests/ -v
 - **Symbol Detector Accuracy**: `OpenCVSymbolDetector` uses traditional contour shape heuristics. On complex engineering drawings, contour analysis achieves **<40% mAP** due to overlapping line work. It serves as an architectural baseline and should be upgraded to a trained YOLOv8 / RT-DETR model for production.
 - **Line Detector Limitations**: `LineDetector` uses Hough Line Transformation. While effective for straight lines (>90% recall), it cannot easily distinguish between electrical signal lines, instrument tubing, and major process piping without deep vector learning.
 - **LLM Sub-Context Pacing**: Grok API queries in `scripts/10_grok_analysis.py` implement strict sub-context filtering and automated backoff retry logic to operate reliably within Groq API free-tier rate limits (30 RPM).
-- **Gemini Vision Reasoning**: The Gemini 2.5 Flash reasoning layer provides engineering-level connection explanations, but accuracy depends on drawing clarity and complexity. Large P&IDs are automatically resized to 2048px max dimension before sending to Gemini; precise spatial data is supplemented by the CV pipeline's pixel-accurate detections. The reasoning layer gracefully skips if `GEMINI_API_KEY` is not configured.
+- **AI Connection Reasoning**: The Groq LLM reasoning layer provides engineering-level connection explanations based on structured CV data. Accuracy depends on the quality of upstream detections (OCR, symbol detection, spatial relationships). The reasoning layer gracefully skips if `GROK_API_KEY` is not configured.
 
 ---
 
@@ -472,7 +468,7 @@ docker run --rm --env-file .env -v "${PWD}/data/outputs:/app/data/outputs" vecto
 
 1. Connect your GitHub repository (`manasshete/Vector-PID`) to your cloud PaaS.
 2. Select **Docker** as the deployment runtime.
-3. Add your environment variables (`GROK_API_KEY`, `GROK_BASE_URL`, `GROK_MODEL`, `GEMINI_API_KEY`).
+3. Add your environment variables (`GROK_API_KEY`, `GROK_BASE_URL`, `GROK_MODEL`).
 4. Allocate at least **1.5 GB – 2 GB RAM** for EasyOCR/PyTorch memory management.
 
 ---
@@ -480,7 +476,7 @@ docker run --rm --env-file .env -v "${PWD}/data/outputs:/app/data/outputs" vecto
 ## 🛣️ Production Roadmap
 
 - [ ] **YOLOv8 / RT-DETR Symbol Detector**: Replace OpenCV contour detector with a fine-tuned deep learning model trained on ISO 14617 / ANSI P&ID symbol datasets (>85% mAP).
-- [x] **Gemini Vision AI Reasoning**: 🆕 Structured connection analysis with engineering reasoning via Google Gemini 2.5 Flash — explains which parts connect, why, and traces process flows.
+- [x] **AI Connection Reasoning**: Structured connection analysis with engineering reasoning via Groq LLM — explains which parts connect, why, and traces process flows.
 - [x] **FastAPI REST Server**: `POST /api/v1/analyze`, `GET /api/v1/graph`, `GET /api/v1/reasoning`, `POST /api/v1/chat`, job polling.
 - [x] **React Three.js Canvas UI**: Interactive web viewer with layer toggles, topology graph, JSON inspector, and Grok chat.
 - [ ] **Multi-Sheet PDF Linker**: Parse matchline text (`SEE DWG-XXXX`) to link cross-drawing process flows into a unified graph.

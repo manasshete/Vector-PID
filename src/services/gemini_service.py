@@ -1,20 +1,19 @@
-"""Gemini Vision AI reasoning service for P&ID connection analysis.
+"""AI reasoning service for P&ID connection analysis.
 
-Uses Google Gemini 2.5 Flash to analyze engineering drawings with both
-vision (the actual image) and structured CV data, producing a rich JSON
-explaining which components connect, how they connect, and why.
+Uses the same Groq/Grok LLM provider (OpenAI-compatible API) to analyze
+structured CV pipeline data and produce a rich JSON explaining which
+components connect, how they connect, and why.
 """
 from __future__ import annotations
 
-import base64
+import asyncio
 import json
 import os
 import time
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any
 
-import cv2
+import httpx
 import numpy as np
 from dotenv import load_dotenv
 
@@ -25,11 +24,13 @@ load_dotenv()
 # System prompt that forces structured JSON output with engineering reasoning
 REASONING_SYSTEM_PROMPT = """You are an expert P&ID (Piping and Instrumentation Diagram) analyst.
 
-You will receive:
-1. An image of a P&ID engineering drawing
-2. Structured data extracted by computer vision (detected text, symbols, lines, and spatial relationships)
+You will receive structured data extracted by computer vision from a P&ID drawing, including:
+- Detected text labels (equipment tags, instrument tags, pipe tags, line numbers)
+- Detected symbols/objects (valves, pumps, tanks, instruments) with positions
+- Detected line segments (pipes, signal lines) with coordinates
+- Spatial relationships (which objects are connected, annotated, or near each other)
 
-Your task is to analyze the drawing and produce a STRUCTURED JSON explaining:
+Your task is to analyze this data and produce a STRUCTURED JSON explaining:
 - What components exist and how they connect
 - WHY each connection exists (engineering reasoning)
 - The overall process flow paths
@@ -38,7 +39,7 @@ Rules:
 - Use the CV-extracted data (object IDs, text tags, line IDs) as your primary reference
 - When you see a component, reference its ID (e.g., "OBJ-001") and tag (e.g., "V-100")
 - Explain connections in engineering terms (e.g., "discharge line", "instrument signal", "drain line")
-- Identify flow direction when visible from the drawing
+- Identify flow direction when possible from the data
 - If uncertain about a connection, say so and lower the confidence score
 - NEVER invent component IDs or tags not present in the CV data
 
@@ -64,29 +65,6 @@ Output ONLY valid JSON matching this exact schema:
     }
   ]
 }"""
-
-
-def _resize_for_gemini(image: np.ndarray, max_dim: int = 2048) -> np.ndarray:
-    """Resize image so the longest dimension is at most max_dim pixels.
-
-    Gemini accepts large images but processing is faster and more reliable
-    with a reasonable size. 2048px preserves enough detail for P&ID analysis.
-    """
-    h, w = image.shape[:2]
-    if max(h, w) <= max_dim:
-        return image
-    scale = max_dim / max(h, w)
-    new_w = int(w * scale)
-    new_h = int(h * scale)
-    return cv2.resize(image, (new_w, new_h), interpolation=cv2.INTER_AREA)
-
-
-def _image_to_base64(image: np.ndarray) -> str:
-    """Encode a numpy image array to base64 JPEG string."""
-    success, buffer = cv2.imencode(".jpg", image, [cv2.IMWRITE_JPEG_QUALITY, 90])
-    if not success:
-        raise RuntimeError("Failed to encode image to JPEG")
-    return base64.b64encode(buffer.tobytes()).decode("utf-8")
 
 
 def _build_context_text(
@@ -149,24 +127,60 @@ def _build_context_text(
 
 
 class GeminiReasoningService:
-    """Gemini Vision AI reasoning layer for P&ID analysis.
+    """AI reasoning layer for P&ID analysis using Groq/Grok LLM.
 
-    Sends the drawing image + structured CV data to Gemini 2.5 Flash
-    and gets back structured JSON with engineering reasoning about
-    component connections and process flows.
+    Uses the same OpenAI-compatible API as GrokService (same API key,
+    base URL, and model) to analyze structured CV pipeline data and
+    produce engineering reasoning about component connections and
+    process flows.
     """
 
     def __init__(self):
-        self.api_key = os.getenv("GEMINI_API_KEY")
-        if not self.api_key or self.api_key == "your_gemini_api_key_here":
+        self.api_key = os.getenv("GROK_API_KEY")
+        self.base_url = os.getenv("GROK_BASE_URL", "https://api.groq.com/openai/v1")
+        self.model = os.getenv("GROK_MODEL", "llama-3.3-70b-versatile")
+
+        if not self.api_key:
             raise EnvironmentError(
-                "GEMINI_API_KEY not set. Get a free key at https://aistudio.google.com/apikey "
-                "and add it to your .env file."
+                "GROK_API_KEY not found in environment. Set it in .env"
             )
 
-        from google import genai
-        self._client = genai.Client(api_key=self.api_key)
-        self._model = "gemini-2.5-flash"
+        if not self.base_url.endswith("/"):
+            self.base_url += "/"
+
+        self._client = httpx.Client(
+            base_url=self.base_url,
+            headers={
+                "Authorization": f"Bearer {self.api_key}",
+                "Content-Type": "application/json",
+            },
+            timeout=90.0,
+        )
+
+    def _chat(self, messages: list[dict[str, str]], temperature: float = 0.1) -> dict[str, Any]:
+        """Synchronous chat completion call with retry on 429 rate limits."""
+        max_retries = 5
+        backoff = 4.0
+
+        for attempt in range(max_retries):
+            try:
+                response = self._client.post(
+                    "chat/completions",
+                    json={
+                        "model": self.model,
+                        "messages": messages,
+                        "temperature": temperature,
+                    },
+                )
+                response.raise_for_status()
+                return response.json()
+            except httpx.HTTPStatusError as exc:
+                if exc.response.status_code == 429 and attempt < max_retries - 1:
+                    wait_time = backoff * (attempt + 1)
+                    print(f"[AI Reasoning] Rate limited, waiting {wait_time:.0f}s (attempt {attempt + 1}/{max_retries})")
+                    time.sleep(wait_time)
+                else:
+                    raise
 
     def reason_about_connections(
         self,
@@ -177,12 +191,12 @@ class GeminiReasoningService:
         relationships: list[dict],
         max_retries: int = 3,
     ) -> dict[str, Any]:
-        """Analyze a P&ID image with CV context and return structured reasoning JSON.
+        """Analyze structured P&ID CV data and return reasoning JSON.
 
         Parameters
         ----------
         image : np.ndarray
-            The preprocessed P&ID drawing image (BGR or grayscale).
+            The preprocessed P&ID drawing image (kept for interface compatibility).
         texts : list[dict]
             Classified text detections from the CV pipeline.
         objects : list[dict]
@@ -192,67 +206,45 @@ class GeminiReasoningService:
         relationships : list[dict]
             Spatial relationships from the relationship engine.
         max_retries : int
-            Number of retries on rate-limit (429) or transient errors.
+            Number of retries on transient errors.
 
         Returns
         -------
         dict
             Structured AI reasoning JSON with connections, flows, and explanations.
         """
-        from google import genai
-        from google.genai import types
-
-        # Prepare image for Gemini
-        resized = _resize_for_gemini(image)
-        img_b64 = _image_to_base64(resized)
-
         # Build context from CV data
         context_text = _build_context_text(texts, objects, lines, relationships)
 
         user_prompt = (
-            "Analyze this P&ID engineering drawing. Here is the structured data "
-            "extracted by computer vision from this same drawing:\n\n"
+            "Analyze the following structured data extracted by computer vision "
+            "from a P&ID engineering drawing.\n\n"
             f"{context_text}\n\n"
-            "Using BOTH the image and the CV data above, identify all component "
-            "connections, explain WHY each connection exists (engineering reasoning), "
-            "and trace the major process flow paths. Output valid JSON only."
+            "Using this CV data, identify all component connections, explain WHY "
+            "each connection exists (engineering reasoning), and trace the major "
+            "process flow paths. Output valid JSON only."
         )
 
-        # Build the multimodal request
-        image_part = types.Part.from_bytes(
-            data=base64.b64decode(img_b64),
-            mime_type="image/jpeg",
-        )
-        text_part = types.Part.from_text(text=user_prompt)
+        messages = [
+            {"role": "system", "content": REASONING_SYSTEM_PROMPT},
+            {"role": "user", "content": user_prompt},
+        ]
 
-        # Retry loop for rate limits
+        # Retry loop
         last_error = None
         for attempt in range(max_retries):
             try:
-                response = self._client.models.generate_content(
-                    model=self._model,
-                    contents=[
-                        types.Content(
-                            role="user",
-                            parts=[image_part, text_part],
-                        ),
-                    ],
-                    config=types.GenerateContentConfig(
-                        system_instruction=REASONING_SYSTEM_PROMPT,
-                        temperature=0.1,
-                        response_mime_type="application/json",
-                    ),
-                )
+                response = self._chat(messages, temperature=0.1)
+                raw_text = response["choices"][0]["message"]["content"].strip()
 
-                # Parse the JSON response
-                raw_text = response.text.strip()
+                # Strip markdown code fences if present
                 if raw_text.startswith("```"):
                     raw_text = raw_text.split("\n", 1)[1].rsplit("\n", 1)[0]
 
                 result = json.loads(raw_text)
 
                 # Add metadata
-                result["ai_model"] = self._model
+                result["ai_model"] = self.model
                 result["timestamp"] = datetime.now(timezone.utc).isoformat()
 
                 # Validate through Pydantic
@@ -278,7 +270,7 @@ class GeminiReasoningService:
                         )
                         for f in result.get("process_flows", [])
                     ],
-                    ai_model=self._model,
+                    ai_model=self.model,
                     timestamp=result["timestamp"],
                 )
 
@@ -286,24 +278,24 @@ class GeminiReasoningService:
 
             except json.JSONDecodeError as exc:
                 last_error = exc
-                print(f"[Gemini] JSON parse error on attempt {attempt + 1}: {exc}")
+                print(f"[AI Reasoning] JSON parse error on attempt {attempt + 1}: {exc}")
             except Exception as exc:
                 last_error = exc
                 error_str = str(exc).lower()
-                if "429" in error_str or "rate" in error_str or "quota" in error_str:
+                if "429" in error_str or "rate" in error_str:
                     wait_time = 10 * (attempt + 1)
-                    print(f"[Gemini] Rate limited, waiting {wait_time}s (attempt {attempt + 1}/{max_retries})")
+                    print(f"[AI Reasoning] Rate limited, waiting {wait_time}s (attempt {attempt + 1}/{max_retries})")
                     time.sleep(wait_time)
                 else:
-                    print(f"[Gemini] Error on attempt {attempt + 1}: {exc}")
+                    print(f"[AI Reasoning] Error on attempt {attempt + 1}: {exc}")
                     if attempt == max_retries - 1:
                         break
                     time.sleep(2)
 
         # Return a fallback structure if all retries failed
-        print(f"[Gemini] All {max_retries} attempts failed. Last error: {last_error}")
+        print(f"[AI Reasoning] All {max_retries} attempts failed. Last error: {last_error}")
         return AIReasoning(
             drawing_summary=f"AI reasoning failed after {max_retries} attempts: {last_error}",
-            ai_model=self._model,
+            ai_model=self.model,
             timestamp=datetime.now(timezone.utc).isoformat(),
         ).model_dump(mode="json")
