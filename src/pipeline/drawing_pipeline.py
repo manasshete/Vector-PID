@@ -90,12 +90,21 @@ def analyze_drawing(image_path: str | Path, output_dir: str | Path = "data/outpu
     graph_dict = drawing_graph.to_dict()
     (output_dir / "graph.json").write_text(json.dumps(graph_dict, indent=2))
 
-    # 10. AI Reasoning Layer (Gemini Vision)
+    # 10. AI Reasoning Layer (Groq LLM)
     ai_reasoning_data = _run_ai_reasoning(
         img, classified_data, enriched_objects, lines_data, rels_data, output_dir
     )
 
-    # 11. Assemble statistics & final JSON
+    # 11. Merge AI reasoning into every entity (per-item reasoning)
+    enriched_objects = _merge_reasoning_into_objects(enriched_objects, ai_reasoning_data)
+    rels_data = _merge_reasoning_into_connections(rels_data, ai_reasoning_data)
+    lines_data = _merge_reasoning_into_lines(lines_data, ai_reasoning_data)
+    classified_data = _merge_reasoning_into_texts(classified_data, ai_reasoning_data)
+
+    print(f"[Pipeline] Merged AI reasoning into {len(enriched_objects)} objects, "
+          f"{len(rels_data)} connections, {len(lines_data)} lines, {len(classified_data)} texts")
+
+    # 12. Assemble statistics & final JSON
     text_class_counts = dict(Counter(t.classification.value for t in classified_texts))
     symbol_counts = dict(Counter(o.type for o in objects))
     line_counts = dict(Counter(l.line_type for l in lines))
@@ -166,3 +175,133 @@ def _run_ai_reasoning(
         print(f"[Pipeline] AI reasoning failed: {exc}")
         return {"drawing_summary": f"AI reasoning error: {exc}", "connections": [], "process_flows": []}
 
+
+def _merge_reasoning_into_objects(objects: list[dict], ai_data: dict) -> list[dict]:
+    """Add per-object AI reasoning — which components it connects to and why."""
+    ai_connections = ai_data.get("connections", [])
+    ai_flows = ai_data.get("process_flows", [])
+
+    # Build lookup: object_id → list of AI connections involving it
+    obj_reasons: dict[str, list[dict]] = {}
+    for conn in ai_connections:
+        from_id = conn.get("from_component", {}).get("id", "")
+        to_id = conn.get("to_component", {}).get("id", "")
+        entry = {
+            "connects_to": conn.get("to_component", {}),
+            "connection_type": conn.get("connection_type", ""),
+            "flow_direction": conn.get("flow_direction", ""),
+            "reason": conn.get("reason", ""),
+            "confidence": conn.get("confidence", 0.5),
+            "line_ids": conn.get("line_ids", []),
+        }
+        if from_id:
+            obj_reasons.setdefault(from_id, []).append(entry)
+        if to_id:
+            reverse_entry = {
+                "connects_to": conn.get("from_component", {}),
+                "connection_type": conn.get("connection_type", ""),
+                "flow_direction": conn.get("flow_direction", ""),
+                "reason": conn.get("reason", ""),
+                "confidence": conn.get("confidence", 0.5),
+                "line_ids": conn.get("line_ids", []),
+            }
+            obj_reasons.setdefault(to_id, []).append(reverse_entry)
+
+    # Find which process flows each object belongs to
+    obj_flows: dict[str, list[str]] = {}
+    for flow in ai_flows:
+        for path_item in flow.get("path", []):
+            for obj in objects:
+                obj_id = obj.get("id", "")
+                assoc_tag = (obj.get("associated_text") or {}).get("text", "")
+                if obj_id in path_item or assoc_tag in path_item:
+                    obj_flows.setdefault(obj_id, []).append(flow.get("flow_name", ""))
+
+    # Merge into each object
+    for obj in objects:
+        obj_id = obj.get("id", "")
+        obj["ai_reasoning"] = {
+            "connections": obj_reasons.get(obj_id, []),
+            "part_of_flows": list(set(obj_flows.get(obj_id, []))),
+        }
+
+    return objects
+
+
+def _merge_reasoning_into_connections(connections: list[dict], ai_data: dict) -> list[dict]:
+    """Add AI reasoning to each spatial relationship — why this connection exists."""
+    ai_connections = ai_data.get("connections", [])
+
+    # Build lookup from (from_id, to_id) pairs in AI reasoning
+    ai_lookup: dict[tuple[str, str], dict] = {}
+    for conn in ai_connections:
+        from_id = conn.get("from_component", {}).get("id", "")
+        to_id = conn.get("to_component", {}).get("id", "")
+        if from_id and to_id:
+            ai_lookup[(from_id, to_id)] = conn
+            ai_lookup[(to_id, from_id)] = conn
+
+    for rel in connections:
+        from_id = rel.get("from_id", "")
+        to_id = rel.get("to_id", "")
+        ai_match = ai_lookup.get((from_id, to_id))
+        if ai_match:
+            rel["ai_reasoning"] = {
+                "reason": ai_match.get("reason", ""),
+                "connection_type": ai_match.get("connection_type", ""),
+                "flow_direction": ai_match.get("flow_direction", ""),
+                "confidence": ai_match.get("confidence", 0.5),
+            }
+        else:
+            rel["ai_reasoning"] = None
+
+    return connections
+
+
+def _merge_reasoning_into_lines(lines: list[dict], ai_data: dict) -> list[dict]:
+    """Add AI reasoning to each line — which components it connects."""
+    ai_connections = ai_data.get("connections", [])
+
+    # Build lookup: line_id → list of AI connections referencing it
+    line_reasons: dict[str, list[dict]] = {}
+    for conn in ai_connections:
+        for line_id in conn.get("line_ids", []):
+            entry = {
+                "from": conn.get("from_component", {}),
+                "to": conn.get("to_component", {}),
+                "reason": conn.get("reason", ""),
+                "connection_type": conn.get("connection_type", ""),
+            }
+            line_reasons.setdefault(line_id, []).append(entry)
+
+    for line in lines:
+        line_id = line.get("id", "")
+        reasons = line_reasons.get(line_id, [])
+        line["ai_reasoning"] = reasons if reasons else None
+
+    return lines
+
+
+def _merge_reasoning_into_texts(texts: list[dict], ai_data: dict) -> list[dict]:
+    """Add AI reasoning to each text — which components reference this tag."""
+    ai_connections = ai_data.get("connections", [])
+
+    # Build lookup: tag text → list of AI connections using that tag
+    tag_reasons: dict[str, list[dict]] = {}
+    for conn in ai_connections:
+        for side in ("from_component", "to_component"):
+            tag = conn.get(side, {}).get("tag", "")
+            if tag:
+                entry = {
+                    "component_id": conn.get(side, {}).get("id", ""),
+                    "component_type": conn.get(side, {}).get("type", ""),
+                    "reason": conn.get("reason", ""),
+                }
+                tag_reasons.setdefault(tag.upper(), []).append(entry)
+
+    for txt in texts:
+        text_val = txt.get("text", "").upper()
+        reasons = tag_reasons.get(text_val, [])
+        txt["ai_reasoning"] = reasons if reasons else None
+
+    return texts
