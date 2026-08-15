@@ -73,21 +73,26 @@ def _build_context_text(
     lines: list[dict],
     relationships: list[dict],
 ) -> str:
-    """Build a concise text summary of CV pipeline data for the prompt."""
+    """Build a rich text summary of CV pipeline data for the prompt."""
     parts = []
 
-    # Summarize detected texts (limit to most important)
+    # Summarize detected texts (limit to most important, prioritizing non-unknown)
     if texts:
+        # Sort so tags and spec references come first
+        sorted_texts = sorted(
+            texts,
+            key=lambda x: 0 if x.get("classification") in ("EQUIPMENT_TAG", "INSTRUMENT_TAG", "PIPE_TAG", "LINE_NUMBER") else 1
+        )
         text_summary = []
-        for t in texts[:40]:
+        for t in sorted_texts[:300]:
             cls = t.get("classification", "UNKNOWN")
             text_summary.append(f"  - {t.get('id')}: \"{t.get('text')}\" [{cls}]")
         parts.append("DETECTED TEXT:\n" + "\n".join(text_summary))
 
-    # Summarize detected symbols/objects
+    # Summarize detected symbols/objects (up to 200)
     if objects:
         obj_summary = []
-        for o in objects[:30]:
+        for o in objects[:200]:
             assoc = o.get("associated_text", {})
             tag = assoc.get("text", "no-tag") if assoc else "no-tag"
             bbox = o.get("bbox", {})
@@ -95,12 +100,12 @@ def _build_context_text(
             obj_summary.append(f"  - {o.get('id')}: {o.get('type')} tag=\"{tag}\" at {center}")
         parts.append("DETECTED SYMBOLS:\n" + "\n".join(obj_summary))
 
-    # Summarize lines
+    # Summarize lines (up to 150 likely pipes)
     if lines:
         pipe_lines = [l for l in lines if l.get("line_type") == "LIKELY_PIPE"]
         parts.append(f"DETECTED LINES: {len(lines)} total, {len(pipe_lines)} likely pipes")
         line_summary = []
-        for l in pipe_lines[:20]:
+        for l in pipe_lines[:150]:
             line_summary.append(
                 f"  - {l.get('id')}: {l.get('orientation')} "
                 f"({l.get('start', [0, 0])} → {l.get('end', [0, 0])}) "
@@ -109,7 +114,7 @@ def _build_context_text(
         if line_summary:
             parts.append("KEY PIPE LINES:\n" + "\n".join(line_summary))
 
-    # Summarize existing spatial relationships
+    # Summarize existing spatial relationships (up to 200 connections)
     if relationships:
         conn_rels = [r for r in relationships if r.get("relationship") == "connected_to"]
         anno_rels = [r for r in relationships if r.get("relationship") == "annotated_by"]
@@ -118,7 +123,7 @@ def _build_context_text(
             f"({len(conn_rels)} connections, {len(anno_rels)} annotations)"
         )
         rel_summary = []
-        for r in conn_rels[:15]:
+        for r in conn_rels[:200]:
             rel_summary.append(f"  - {r.get('from_id')} → {r.get('to_id')} (dist={r.get('distance', 0):.1f}px)")
         if rel_summary:
             parts.append("KEY CONNECTIONS:\n" + "\n".join(rel_summary))
