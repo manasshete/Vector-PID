@@ -140,3 +140,65 @@ def merge_collinear_lines(
             merged.append(best_pair)
 
     return merged
+
+
+def calculate_midpoint(p1: tuple[float, float], p2: tuple[float, float]) -> tuple[float, float]:
+    """Compute the 2D midpoint between two points."""
+    return ((p1[0] + p2[0]) / 2.0, (p1[1] + p2[1]) / 2.0)
+
+
+def calculate_angle(p1: tuple[float, float], p2: tuple[float, float]) -> float:
+    """Compute the orientation angle in degrees [0, 180) from p1 to p2."""
+    dx = p2[0] - p1[0]
+    dy = p2[1] - p1[1]
+    return math.degrees(math.atan2(dy, dx)) % 180.0
+
+
+def calculate_iou(
+    box1: tuple[float, float, float, float],
+    box2: tuple[float, float, float, float],
+) -> float:
+    """Calculate Intersection over Union (IoU) of two bounding boxes (x, y, w, h)."""
+    x1, y1, w1, h1 = box1
+    x2, y2, w2, h2 = box2
+
+    xi1 = max(x1, x2)
+    yi1 = max(y1, y2)
+    xi2 = min(x1 + w1, x2 + w2)
+    yi2 = min(y1 + h1, y2 + h2)
+
+    inter_w = max(0.0, xi2 - xi1)
+    inter_h = max(0.0, yi2 - yi1)
+    inter_area = inter_w * inter_h
+
+    area1 = w1 * h1
+    area2 = w2 * h2
+    union_area = area1 + area2 - inter_area
+
+    if union_area <= 0:
+        return 0.0
+    return inter_area / union_area
+
+
+def point_in_polygon(point: tuple[float, float], polygon: list[tuple[float, float]]) -> bool:
+    """Ray-casting algorithm to test if a 2D point lies inside a polygon."""
+    x, y = point
+    n = len(polygon)
+    if n < 3:
+        return False
+
+    inside = False
+    p1x, p1y = polygon[0]
+    for i in range(1, n + 1):
+        p2x, p2y = polygon[i % n]
+        if y > min(p1y, p2y):
+            if y <= max(p1y, p2y):
+                if x <= max(p1x, p2x):
+                    if p1y != p2y:
+                        xinters = (y - p1y) * (p2x - p1x) / (p2y - p1y) + p1x
+                    if p1x == p2x or x <= xinters:
+                        inside = not inside
+        p1x, p1y = p2x, p2y
+
+    return inside
+
