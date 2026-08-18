@@ -52,3 +52,41 @@ def test_merge_collinear_lines():
     assert len(merged) == 1
     (s, e) = merged[0]
     assert s == (0, 0) and e == (100, 0) or s == (100, 0) and e == (0, 0)
+
+
+def test_calculate_midpoint():
+    from src.geometry.geometry_utils import calculate_midpoint
+    assert calculate_midpoint((0, 0), (10, 10)) == (5.0, 5.0)
+    assert calculate_midpoint((-10, 20), (10, -20)) == (0.0, 0.0)
+
+
+def test_calculate_angle():
+    from src.geometry.geometry_utils import calculate_angle
+    assert abs(calculate_angle((0, 0), (10, 0)) - 0.0) < 1e-5
+    assert abs(calculate_angle((0, 0), (0, 10)) - 90.0) < 1e-5
+    assert abs(calculate_angle((0, 0), (10, 10)) - 45.0) < 1e-5
+
+
+def test_calculate_iou():
+    from src.geometry.geometry_utils import calculate_iou
+    # Identical boxes
+    box1 = (0, 0, 10, 10)
+    assert abs(calculate_iou(box1, box1) - 1.0) < 1e-5
+
+    # Non-overlapping boxes
+    box2 = (20, 20, 10, 10)
+    assert calculate_iou(box1, box2) == 0.0
+
+    # Half overlap
+    box3 = (5, 0, 10, 10)
+    # intersection: 5*10 = 50, union: 100 + 100 - 50 = 150 -> 1/3
+    assert abs(calculate_iou(box1, box3) - (1.0 / 3.0)) < 1e-5
+
+
+def test_point_in_polygon():
+    from src.geometry.geometry_utils import point_in_polygon
+    triangle = [(0.0, 0.0), (10.0, 0.0), (5.0, 10.0)]
+    assert point_in_polygon((5.0, 2.0), triangle) is True
+    assert point_in_polygon((20.0, 20.0), triangle) is False
+    assert point_in_polygon((0.0, 0.0), [(0.0, 0.0), (1.0, 1.0)]) is False
+
