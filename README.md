@@ -17,7 +17,7 @@
 <a href="client/"><img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black&labelColor=0d1117"/></a>&nbsp;
 <a href="client/src/lib/pidScene.js"><img src="https://img.shields.io/badge/Three.js-3D_Canvas-000000?style=for-the-badge&logo=three.js&logoColor=white&labelColor=0d1117"/></a>&nbsp;
 <a href="src/api/main.py"><img src="https://img.shields.io/badge/FastAPI-REST_API-009688?style=for-the-badge&logo=fastapi&logoColor=white&labelColor=0d1117"/></a>&nbsp;
-<a href="tests/"><img src="https://img.shields.io/badge/PyTest-88_PASSED-22C55E?style=for-the-badge&logo=pytest&logoColor=white&labelColor=0d1117"/></a>
+<a href="tests/"><img src="https://img.shields.io/badge/PyTest-91_PASSED-22C55E?style=for-the-badge&logo=pytest&logoColor=white&labelColor=0d1117"/></a>
 
 <br/>
 
@@ -534,23 +534,24 @@ python -m pytest tests/test_drawing_graph.py -v
 ```
 
 <details open>
-<summary><b>✅ Test Suite Coverage Breakdown (88/88 Passing)</b></summary>
+<summary><b>✅ Test Suite Coverage Breakdown (91/91 Passing)</b></summary>
 
 <br/>
 
 | Test File | Passed | Tested Functionality |
 |:---|:---:|:---|
-| `test_tiling.py` | 🟢 9 | Tile grid generation, overlap handling, bidirectional coordinate transforms |
-| `test_ocr.py` | 🟢 8 | EasyOCR extraction mock, bounding box normalization, deduplication |
-| `test_text_classifier.py` | 🟢 12 | 36 ISA-5.1 regex tag patterns (Instruments, Valves, Equipment, Pipe specs) |
-| `test_line_detector.py` | 🟢 10 | Hough line transform, angle classification, horizontal/vertical filtering |
-| `test_geometry_utils.py` | 🟢 8 | Collinear segment merging, Euclidean distance, intersection calculations |
-| `test_symbol_detector.py` | 🟢 9 | Contour heuristics, circular valve detection, aspect ratio classification |
-| `test_spatial_analyzer.py` | 🟢 8 | Proximity bounding box association, containment checks, deduplication |
-| `test_drawing_graph.py` | 🟢 10 | NetworkX DiGraph creation, edge weighting, BFS path tracing algorithms |
-| `test_gemini_reasoning.py` | 🟢 8 | AI prompt generation, response parsing, graceful API key failure fallback |
-| `test_pipeline.py` | 🟢 6 | End-to-end pipeline orchestration, artifact saving, error propagation |
-| **TOTAL** | **🟢 88 / 88** | **100% Passing Test Suite** |
+| `test_tiling.py` | 🟢 13 | Tile grid generation, overlap handling, bidirectional coordinate transforms |
+| `test_ocr.py` | 🟢 7 | EasyOCR extraction mock, bounding box normalization, deduplication |
+| `test_text_classifier.py` | 🟢 36 | 36 ISA-5.1 regex tag patterns (Instruments, Valves, Equipment, Pipe specs) |
+| `test_line_detector.py` | 🟢 2 | Hough line transform, angle classification, horizontal/vertical filtering |
+| `test_geometry_utils.py` | 🟢 10 | Collinear segment merging, midpoint, angle, IoU, polygon containment |
+| `test_symbol_detector.py` | 🟢 2 | Contour heuristics, circular valve detection, aspect ratio classification |
+| `test_spatial_analyzer.py` | 🟢 4 | Proximity bounding box association, containment checks, deduplication |
+| `test_drawing_graph.py` | 🟢 2 | NetworkX DiGraph, edge weighting, BFS path tracing, subgraphs |
+| `test_gemini_reasoning.py` | 🟢 12 | AI prompt generation, response parsing, graceful API key failure fallback |
+| `test_pipeline.py` | 🟢 1 | End-to-end pipeline orchestration, artifact saving, error propagation |
+| `test_utils.py` | 🟢 3 | Custom domain exceptions, colorized logger, configuration hyperparameter manager |
+| **TOTAL** | **🟢 91 / 91** | **100% Passing Test Suite across 11 Modules** |
 
 </details>
 
