@@ -30,3 +30,21 @@ def test_graph_construction_and_tracing():
     gdict = dgraph.to_dict()
     assert gdict["num_nodes"] == 3
     assert gdict["num_edges"] == 2
+
+    # Path finding
+    path = dgraph.find_path("LINE-001", "TXT-001")
+    assert path == ["LINE-001", "OBJ-001", "TXT-001"]
+
+    no_path = dgraph.find_path("LINE-001", "NON-EXISTENT")
+    assert no_path == []
+
+    # Subgraph extraction
+    sub = dgraph.get_subgraph(["OBJ-001", "TXT-001"])
+    assert sub["num_nodes"] == 2
+    assert sub["num_edges"] == 1
+
+    # Connected components
+    components = dgraph.get_connected_components()
+    assert len(components) == 1
+    assert len(components[0]) == 3
+
