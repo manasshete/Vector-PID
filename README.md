@@ -1,494 +1,511 @@
-# Vector-PID 
+<div align="center">
 
-**AI-Powered P&ID Topology Extraction & Semantic Reasoning Platform**
+<!-- Animated header banner -->
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0f6e56,50:134e4a,100:1c2430&height=220&section=header&text=Vector-PID&fontSize=72&fontColor=ffffff&animation=fadeIn&fontAlignY=38&desc=AI-Powered%20P%26ID%20Intelligence%20Platform&descSize=18&descAlignY=62&descAlign=50" width="100%"/>
 
-[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
-[![PyTest Status](https://img.shields.io/badge/tests-88%20passed-brightgreen.svg)]()
-[![AI Reasoning](https://img.shields.io/badge/AI_Reasoning-Groq_LLM-orange.svg)](https://groq.com/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Architecture: Modular](https://img.shields.io/badge/architecture-Python--First-orange.svg)]()
+<!-- Typing animation subtitle -->
+<img src="https://readme-typing-svg.demolab.com/?lines=P%26ID+Topology+Extraction;Three.js+Interactive+Viewer;Groq-Powered+AI+Reasoning;FastAPI+%2B+React+Full+Stack&font=Fira+Code&size=22&duration=3000&pause=800&color=0F6E56&center=true&width=620&height=50" alt="Typing animation"/>
 
-**Vector-PID** is an enterprise-grade, end-to-end computer vision and semantic AI framework designed to process, extract, and reason over ultra-high-resolution Piping and Instrumentation Diagrams (P&IDs) and engineering schematics.
+<br/>
 
-It combines **deterministic computer vision** (bidirectional tiling, vector line detection, contour analysis, and regex text classification) with **graph topology construction** (NetworkX) and **LLM-powered AI reasoning & semantic Q&A** (Groq API) to turn static engineering drawings into queryable digital twin data structures.
+<!-- Badges -->
+[![Python 3.10+](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/downloads/)
+[![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=black)](client/)
+[![Three.js](https://img.shields.io/badge/Three.js-Canvas-000000?style=for-the-badge&logo=three.js&logoColor=white)](client/src/lib/pidScene.js)
+[![FastAPI](https://img.shields.io/badge/FastAPI-REST-009688?style=for-the-badge&logo=fastapi&logoColor=white)](src/api/main.py)
+[![Tests](https://img.shields.io/badge/Tests-88%20passed-22C55E?style=for-the-badge&logo=pytest&logoColor=white)](tests/)
+[![License](https://img.shields.io/badge/License-MIT-F59E0B?style=for-the-badge)](LICENSE)
 
----
+<br/>
 
-## 📋 Table of Contents
+**Turn static P&IDs into queryable digital twins** — computer vision + graph topology + grounded LLM reasoning.
 
-- [Executive Summary](#-executive-summary)
-- [System Architecture](#-system-architecture)
-- [Pipeline Breakdown (Steps 1–12)](#-pipeline-breakdown-steps-112)
-- [Repository Structure](#-repository-structure)
-- [Installation & Setup](#-installation--setup)
-- [Usage & Execution Guide](#-usage--execution-guide)
-- [Web Platform (API + React UI)](#-web-platform-api--react-ui)
-- [REST API Reference](#-rest-api-reference)
-- [Data Schemas & JSON Output Artifacts](#-data-schemas--json-output-artifacts)
-- [Testing & Quality Assurance](#-testing--quality-assurance)
-- [Honesty Disclosures & Model Limitations](#-honesty-disclosures--model-limitations)
-- [Hosting & Docker Deployment](#-hosting--docker-deployment)
-- [Production Roadmap](#-production-roadmap)
+<br/>
 
----
+[![⬇️ Quick Start](#-quick-start-30-seconds)](#-quick-start-30-seconds)
+&nbsp;•&nbsp;
+[![🏗️ Architecture](#️-live-architecture)](#️-live-architecture)
+&nbsp;•&nbsp;
+[![🌐 Web UI](#-web-platform)](#-web-platform)
+&nbsp;•&nbsp;
+[![🔌 API](#-rest-api)](#-rest-api)
+&nbsp;•&nbsp;
+[![🧪 Tests](#-testing)](#-testing)
 
-## 🎯 Executive Summary
+<br/>
 
-Process engineering drawings (P&IDs) are massive, high-density vector PDFs (often 5000×3500+ pixels) containing thousands of interconnected components, instruments, line numbers, and annotations. 
+<!-- Animated stats bar -->
+<img src="https://capsule-render.vercel.app/api?type=soft&height=50&color=0:e8ecf0,100:e6f4ef&text=633+texts+%7C+515+symbols+%7C+2928+lines+%7C+6118+graph+edges+%7C+4963×3509+px&fontSize=14&fontColor=1c2430" width="80%"/>
 
-Traditional single-pass OCR and generic vision models fail due to memory limits, text scaling, and loss of geometric context. **Vector-PID** solves this by enforcing a strict 14-stage pipeline:
-
-1. **Zero-Drift Tiling**: Splits drawings into overlapping 1024×1024 tiles with 100% loss-free bidirectional coordinate mapping (`local ⇄ global`).
-2. **Deterministic Extraction**: Extracts text via EasyOCR, lines via Hough Transform with collinear segment merging, and symbols via shape contour analysis.
-3. **Structured Spatial Topology**: Connects text annotations to physical components and builds a NetworkX topology graph representing piping flow and connectivity.
-4. **AI Connection Reasoning**: Feeds all structured CV data into Groq LLM, producing a structured JSON explaining which parts connect to which, why they connect (engineering reasoning), and what process flows exist.
-5. **Grounded LLM Reasoning**: Feeds structured sub-contexts into Grok LLM to answer complex process engineering queries without hallucinating equipment tags or dimensions.
-6. **Interactive Web Viewer**: React + Three.js canvas with topology graph explorer, JSON inspector, and live Grok Q&A — connected to the Python pipeline via FastAPI.
+</div>
 
 ---
 
-## 🏗️ System Architecture
+## ⚡ Quick Start (30 seconds)
 
-```text
-                                  +-----------------------+
-                                  |   Raw P&ID PDF / Image|
-                                  +-----------+-----------+
-                                              |
-                                              v
-                                  +-----------+-----------+
-                                  |  Load & Preprocessing |
-                                  |  (Poppler + OpenCV)   |
-                                  +-----------+-----------+
-                                              |
-                                              v
-                                  +-----------+-----------+
-                                  |    TileManager Grid   |
-                                  |  (1024x1024 + 100px)  |
-                                  +-----------+-----------+
-                                              |
-                     +------------------------+------------------------+
-                     |                        |                        |
-                     v                        v                        v
-         +-----------+-----------+ +----------+----------+ +-----------+-----------+
-         |      EasyOCR Engine   | |   LineDetector      | | OpenCVSymbolDetector |
-         |   (Tile OCR Parallel) | | (Hough + Collinear) | |  (Contour Analysis)  |
-         +-----------+-----------+ +----------+----------+ +-----------+-----------+
-                     |                        |                        |
-                     v                        |                        |
-         +-----------+-----------+            |                        |
-         |    TextClassifier     |            |                        |
-         | (Regex & P&ID Rules)  |            |                        |
-         +-----------+-----------+            |                        |
-                     |                        |                        |
-                     +------------------------+------------------------+
-                                              |
-                                              v
-                                  +-----------+-----------+
-                                  |   RelationshipEngine  |
-                                  | (Spatial Proximity)   |
-                                  +-----------+-----------+
-                                              |
-                                              v
-                                  +-----------+-----------+
-                                  |   DrawingGraph Engine |
-                                  | (NetworkX Topology)   |
-                                  +-----------+-----------+
-                                              |
-                                              v
-                                  +-----------+-----------+
-                                  |  AI Reasoning (Groq)  |
-                                  | (Connection Reasoning)|
-                                  +-----------+-----------+
-                                              |
-                                              v
-                                  +-----------+-----------+
-                                  |     GrokService LLM   |
-                                  | (Grounded QA & Trace) |
-                                  +-----------+-----------+
-                                              |
-                                              v
-                                  +-----------+-----------+
-                                  |   FastAPI REST Server |
-                                  |  (Upload, Graph, Chat)|
-                                  +-----------+-----------+
-                                              |
-                                              v
-                                  +-----------+-----------+
-                                  |  React + Three.js UI  |
-                                  | (Canvas, Graph, JSON) |
-                                  +-----------------------+
-```
+<table>
+<tr>
+<td width="50%" valign="top">
 
----
-
-## 🔬 Pipeline Breakdown (Steps 1–14)
-
-| Stage | Module | Responsibility | Key Output |
-| :--- | :--- | :--- | :--- |
-| **Step 1–2** | `src.preprocessing.image_processor` | PDF rendering via Poppler (300 DPI), binarization, Otsu thresholding, noise removal. | Clean high-res image array |
-| **Step 3–4** | `src.preprocessing.tiling` | TileManager splits large image into 1024×1024 tiles with 100px overlap and exact coordinate translation. | 24 grid tiles (0 error drift) |
-| **Step 5** | `src.ocr.ocr_engine` | Tile-by-tile text extraction using PyTorch EasyOCR with local-to-global bounding box transformation. | `data/outputs/ocr_results.json` |
-| **Step 6** | `src.ocr.text_classifier` | Rule-based regex engine classifying text into `PIPE_TAG`, `EQUIPMENT_TAG`, `INSTRUMENT_TAG`, `LINE_NUMBER`, `SPEC_REFERENCE`, `PIPE_SIZE`, `SERVICE`, `DESCRIPTION`, `ANNOTATION`, `DRAWING_REFERENCE`, and `GRID_LABEL`. | `data/outputs/classified_text.json` |
-| **Step 7** | `src.geometry.line_detector` | Hough line transform with collinear segment merging (5° angle, 15px gap), orientation (`horizontal`, `vertical`, `diagonal`), and type classification (`LIKELY_PIPE`, `BORDER`, `DIMENSION`). | `data/outputs/lines.json` |
-| **Step 8** | `src.detection.symbol_detector` | OpenCV contour shape heuristics for symbol classification (`VALVE`, `PUMP`, `TANK`, `INSTRUMENT`, `FLANGE`, `EQUIPMENT`). | `data/outputs/objects.json` |
-| **Step 9** | `src.spatial.relationship_engine` | Deduplicates tile-overlap text, computes Euclidean proximity between symbols and text (`annotated_by`), and associates line endpoints to symbols (`connected_to`). | `data/outputs/relationships.json` |
-| **Step 10** | `src.graph.drawing_graph` | Constructs NetworkX `nx.Graph` linking objects, lines, and text. Enables BFS path tracing (`trace_from_object`). | `data/outputs/graph.json` |
-| **Step 11** | `src.services.gemini_service` | **AI connection reasoning** — sends all structured CV data to Groq LLM (same API key as Grok). Produces structured JSON with connection reasoning, engineering explanations, and process flow paths. | `data/outputs/ai_reasoning.json` |
-| **Step 12** | `src.services.grok_service` | OpenAI-compatible Grok API client with strict system prompt enforcement, relevant sub-context retrieval, and automated 429 rate-limit backoff retry. | Natural language QA responses |
-| **Step 13** | `src.pipeline.drawing_pipeline` | Single entry point (`analyze_drawing()`) orchestrating all stages and exporting 8 structured JSON artifacts. | `data/outputs/final_analysis.json` |
-| **Step 14** | `src.api.main` | FastAPI server exposing upload, analysis retrieval, graph export, AI reasoning, and Grok chat to the React client. | REST JSON over HTTP |
-
----
-
-## 📁 Repository Structure
-
-```text
-engineering-drawing-intelligence/
-├── Dockerfile                   # Production containerization setup
-├── README.md                    # Project documentation
-├── requirements.txt             # Python dependencies
-├── .env.example                 # Environment configuration template
-│
-├── src/                         # Core Python modules
-│   ├── detection/               # Object/Symbol detection (Detector & OpenCVSymbolDetector)
-│   ├── geometry/                # Vector line detector & geometry utilities
-│   ├── graph/                   # NetworkX graph representation (DrawingGraph)
-│   ├── models/                  # Pydantic data models (BoundingBox, DetectedLine, AIReasoning, etc.)
-│   ├── ocr/                     # EasyOCR engine & rule-based TextClassifier
-│   ├── pipeline/                # End-to-end orchestration (analyze_drawing)
-│   ├── preprocessing/           # Image processor, PDF renderer, TileManager
-│   ├── services/                # GrokService LLM Q&A + AI Connection Reasoning
-│   ├── spatial/                 # Spatial reasoning & relationship extraction
-│   ├── api/                     # FastAPI REST server (Step 14)
-│   └── utils/                   # Visualization helpers
-│
-├── client/                      # React + Vite + Three.js web UI
-│   ├── src/
-│   │   ├── components/          # Canvas, GraphExplorer, AiChatDrawer, DataInspector
-│   │   ├── lib/                 # pidScene.js (Three.js), api.js, normalizeAnalysis.js
-│   │   └── data/                # Sample fallback dataset
-│   ├── package.json
-│   └── vite.config.js           # Dev proxy: /api → localhost:8000
-│
-├── scripts/                     # Standalone CLI execution scripts
-│   ├── 03_tiling.py             # Test tiling grid generation
-│   ├── 04_ocr.py                # Run OCR engine
-│   ├── 05_text_classification.py# Run text classifier
-│   ├── 06_line_detection.py     # Run line segment detection
-│   ├── 07_symbol_detection.py   # Run symbol contour detector
-│   ├── 08_spatial_reasoning.py  # Extract spatial relationships
-│   ├── 09_graph_construction.py # Build NetworkX topology graph
-│   ├── 10_grok_analysis.py      # Run Grok LLM QA test suite
-│   ├── 11_end_to_end_pipeline.py# Execute full end-to-end pipeline
-│   └── run_api.py               # Start FastAPI server (port 8000)
-│
-├── tests/                       # Unit test suite (88 tests)
-│   ├── test_drawing_graph.py
-│   ├── test_gemini_reasoning.py # 🆕 AI reasoning model & service tests
-│   ├── test_geometry_utils.py
-│   ├── test_line_detector.py
-│   ├── test_ocr.py
-│   ├── test_pipeline.py
-│   ├── test_spatial_analyzer.py
-│   ├── test_symbol_detector.py
-│   ├── test_text_classifier.py
-│   └── test_tiling.py
-│
-└── data/                        # Project datasets & outputs
-    ├── raw/                     # Input P&ID files (.pdf, .png)
-    ├── processed/               # Preprocessed image cache
-    ├── tiles/                   # Generated tile images
-    └── outputs/                 # Final 8 JSON artifacts (incl. ai_reasoning.json)
-```
-
----
-
-## 🛠️ Installation & Setup
-
-### Prerequisites
-- **Python**: 3.10 or higher
-- **Node.js**: 18+ *(for the React web client)*
-- **Poppler Utilities** *(required for PDF rendering)*:
-  - **Linux**: `sudo apt-get install poppler-utils`
-  - **macOS**: `brew install poppler`
-  - **Windows**: Download Poppler binaries and add `/bin` to system `PATH`.
-
-### Installation Steps
-
+**🐍 Terminal 1 — API**
 ```bash
-# 1. Clone the repository
 git clone https://github.com/manasshete/Vector-PID.git
 cd Vector-PID
-
-# 2. Create and activate a virtual environment
 python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-
-# 3. Install Python dependencies
+source .venv/bin/activate   # Win: .venv\Scripts\activate
 pip install -r requirements.txt
-
-# 4. Install web client dependencies
-cd client && npm install && cd ..
-
-# 5. Configure environment variables
-cp .env.example .env
-```
-
-Edit `.env` to add your API credentials:
-```env
-# Groq LLM (used for both chat Q&A and AI connection reasoning)
-GROK_API_KEY=your_groq_api_key_here
-GROK_BASE_URL=https://api.groq.com/openai/v1
-GROK_MODEL=llama-3.3-70b-versatile
-```
-
----
-
-## 🚀 Usage & Execution Guide
-
-### 1. Run the End-to-End Pipeline
-Place your target PDF in `data/raw/` and execute:
-```bash
-python scripts/11_end_to_end_pipeline.py
-```
-This generates all 8 structured JSON artifacts in `data/outputs/`, including `ai_reasoning.json` with AI connection reasoning.
-
-### 2. Run Individual Pipeline Stages
-
-```bash
-# Run Text Classification
-python scripts/05_text_classification.py
-
-# Run Line Detection
-python scripts/06_line_detection.py
-
-# Run Symbol Detection
-python scripts/07_symbol_detection.py
-
-# Run Spatial Relationship Extraction
-python scripts/08_spatial_reasoning.py
-
-# Run Topology Graph Construction
-python scripts/09_graph_construction.py
-
-# Run Grok LLM Reasoning QA
-python scripts/10_grok_analysis.py
-```
-
----
-
-## 🌐 Web Platform (API + React UI)
-
-The React client talks to the Python pipeline through a FastAPI server. Upload a P&ID, run the full CV pipeline in the background, then explore results in an interactive Three.js canvas.
-
-### Quick Start (two terminals)
-
-**Terminal 1 — API server** (from project root):
-```bash
+cp .env.example .env        # add GROK_API_KEY
 python scripts/run_api.py
 ```
-Server runs at `http://localhost:8000`. On startup it auto-loads `data/outputs/final_analysis.json` if present.
 
-**Terminal 2 — Web client**:
+</td>
+<td width="50%" valign="top">
+
+**⚛️ Terminal 2 — UI**
 ```bash
 cd client
+npm install
 npm run dev
 ```
-Open the URL Vite prints (usually `http://localhost:5173`). The Vite dev proxy forwards `/api/*` to port 8000.
 
-### UI Features
+Open `http://localhost:5173` → **Upload** a P&ID → explore in 3D canvas.
 
-| Tab | Description |
-| :--- | :--- |
-| **Canvas** | Three.js P&ID viewer — 3D pipe tubes, symbol meshes, zoom-based label decluttering, minimap, layer toggles |
-| **Graph** | Topology explorer with BFS path tracer and searchable node directory |
-| **Ask AI** | Grounded Grok Q&A against the loaded analysis (requires `GROK_API_KEY`) |
-| **Data** | Raw JSON artifact inspector with copy/download |
-
-### Upload Flow
-
-1. Click **Upload** in the navbar and select a `.pdf` or image (`.png`, `.jpg`, `.tif`, `.bmp`).
-2. The API returns a `job_id`; the client polls until the pipeline completes.
-3. Results populate all tabs from `final_analysis.json` structure.
-4. Without the API running, the UI falls back to bundled sample data.
-
-> **Note:** Full pipeline analysis on large P&IDs can take several minutes (OCR + line/symbol detection). Keep the API terminal open while jobs run.
+</td>
+</tr>
+</table>
 
 ---
 
-## 🔌 REST API Reference
+## 🏗️ Live Architecture
+
+> Renders interactively on GitHub — click nodes to explore in supported viewers.
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#e6f4ef', 'primaryTextColor': '#1c2430', 'primaryBorderColor': '#0f6e56', 'lineColor': '#8b949e', 'secondaryColor': '#eef1f4', 'tertiaryColor': '#fff7ed'}}}%%
+flowchart TB
+    subgraph INPUT["📄 Input"]
+        PDF["P&ID PDF / Image<br/>4963×3509 px"]
+    end
+
+    subgraph CV["🔬 Computer Vision Pipeline"]
+        direction TB
+        PRE["Preprocess + Tile<br/>1024² + 100px overlap"]
+        OCR["EasyOCR"]
+        CLS["Text Classifier<br/>Regex P&ID rules"]
+        LINE["Line Detector<br/>Hough + merge"]
+        SYM["Symbol Detector<br/>OpenCV contours"]
+        PRE --> OCR & LINE & SYM
+        OCR --> CLS
+    end
+
+    subgraph TOPO["🕸️ Topology"]
+        REL["Relationship Engine"]
+        GRAPH["NetworkX Graph"]
+        REL --> GRAPH
+    end
+
+    subgraph AI["🤖 AI Layer"]
+        REASON["Connection Reasoning<br/>Groq LLM"]
+        CHAT["Grounded Q&A<br/>Grok Service"]
+    end
+
+    subgraph WEB["🌐 Web Platform"]
+        API["FastAPI :8000"]
+        UI["React + Three.js<br/>Canvas · Graph · Chat"]
+        API --> UI
+    end
+
+    PDF --> PRE
+    CLS & LINE & SYM --> REL
+    GRAPH --> REASON & CHAT
+    REASON & GRAPH --> API
+    CHAT --> API
+
+    style PDF fill:#fff7ed,stroke:#b45309
+    style UI fill:#e6f4ef,stroke:#0f6e56,stroke-width:2px
+    style API fill:#eef6ff,stroke:#1d4ed8
+    style REASON fill:#f5f3ff,stroke:#7c3aed
+```
+
+<details>
+<summary><b>📡 Upload → Analyze sequence (click to expand)</b></summary>
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User
+    participant UI as React UI
+    participant API as FastAPI
+    participant CV as Python Pipeline
+    participant LLM as Groq LLM
+
+    User->>UI: Upload P&ID PDF
+    UI->>API: POST /api/v1/analyze
+    API-->>UI: { job_id, status: pending }
+    loop Poll every 2.5s
+        UI->>API: GET /api/v1/jobs/{id}
+        API-->>UI: { status: pending }
+    end
+    API->>CV: analyze_drawing()
+    CV->>CV: OCR → Lines → Symbols → Graph
+    CV->>LLM: AI connection reasoning
+    CV-->>API: final_analysis.json
+    API-->>UI: { status: completed, result }
+    UI->>UI: Three.js canvas + graph + chat
+    User->>UI: Ask "Trace compressor inlet"
+    UI->>API: POST /api/v1/chat
+    API->>LLM: Grounded sub-context query
+    LLM-->>UI: Answer + source IDs
+```
+
+</details>
+
+---
+
+## 🎯 What It Does
+
+<table>
+<tr>
+<td align="center" width="25%">
+<h3>🔲</h3>
+<b>Zero-Drift Tiling</b><br/>
+<sub>1024² tiles · loss-free coords</sub>
+</td>
+<td align="center" width="25%">
+<h3>📐</h3>
+<b>Deterministic CV</b><br/>
+<sub>OCR · Hough lines · contours</sub>
+</td>
+<td align="center" width="25%">
+<h3>🕸️</h3>
+<b>Graph Topology</b><br/>
+<sub>NetworkX · BFS tracing</sub>
+</td>
+<td align="center" width="25%">
+<h3>🧠</h3>
+<b>Grounded AI</b><br/>
+<sub>Groq LLM · 0-hallucination</sub>
+</td>
+</tr>
+</table>
+
+<details>
+<summary><b>📖 Executive Summary — full details</b></summary>
+
+<br/>
+
+Process engineering drawings (P&IDs) are massive, high-density vector PDFs (often **5000×3500+** pixels) containing thousands of interconnected components, instruments, line numbers, and annotations.
+
+Traditional single-pass OCR and generic vision models fail due to memory limits, text scaling, and loss of geometric context. **Vector-PID** solves this with a strict **14-stage pipeline**:
+
+| # | Stage | What it does |
+|:-:|-------|-------------|
+| 1 | **Zero-Drift Tiling** | Overlapping 1024×1024 tiles with bidirectional `local ⇄ global` mapping |
+| 2 | **Deterministic Extraction** | EasyOCR text, Hough lines, OpenCV symbol contours |
+| 3 | **Spatial Topology** | Annotates symbols, connects lines, builds NetworkX graph |
+| 4 | **AI Connection Reasoning** | Groq LLM explains *why* components connect and traces process flows |
+| 5 | **Grounded Q&A** | Sub-context retrieval — no hallucinated tags |
+| 6 | **Web Viewer** | Three.js canvas + graph explorer + live chat |
+
+</details>
+
+---
+
+## 🌐 Web Platform
+
+<div align="center">
+
+| Tab | Feature | Tech |
+|:---:|:--------|:-----|
+| **Canvas** | 3D pipe tubes, symbol meshes, zoom-based label declutter, minimap | Three.js + CSS2D |
+| **Graph** | BFS path tracer, searchable node directory | NetworkX export |
+| **Ask AI** | Grounded Groq Q&A with cited source IDs | GrokService |
+| **Data** | 8 JSON artifacts — copy / download | FastAPI |
+
+</div>
+
+<details>
+<summary><b>🖱️ Canvas controls & label density</b></summary>
+
+<br/>
+
+| Action | Control |
+|--------|---------|
+| Pan | Drag |
+| Zoom | Scroll wheel |
+| Fit drawing | Toolbar ⊞ button |
+| 3D tilt | Cuboid toggle |
+| Focus selection | Target button |
+| Jump to entity | Sidebar search |
+| Label clutter | **Clean** / Balanced / All density modes |
+
+> At overview zoom, only high-priority tags (instrument, equipment, line numbers) are shown. Zoom in to reveal more. Symbol badges (FLANGE, etc.) appear only when zoomed in.
+
+</details>
+
+---
+
+## 🔌 REST API
+
+<details open>
+<summary><b>📋 Endpoint reference (click to collapse)</b></summary>
+
+<br/>
 
 | Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `GET` | `/api/v1/health` | Server status, whether analysis is loaded, Grok & Gemini keys configured |
-| `GET` | `/api/v1/analysis` | Full `final_analysis.json` payload (includes `ai_reasoning`) |
-| `GET` | `/api/v1/graph` | NetworkX graph export only |
-| `GET` | `/api/v1/reasoning` | AI reasoning JSON — connection explanations & process flows from Groq LLM |
-| `POST` | `/api/v1/analyze` | Upload drawing file → returns `{ job_id, status: "pending" }` |
-| `GET` | `/api/v1/jobs/{job_id}` | Poll job status; `completed` includes `result` |
-| `POST` | `/api/v1/chat` | Body: `{ "question": "..." }` → grounded Grok answer + cited source IDs |
+|:------:|:---------|:------------|
+| `GET` | `/api/v1/health` | Server status + keys configured |
+| `GET` | `/api/v1/analysis` | Full `final_analysis.json` |
+| `GET` | `/api/v1/graph` | NetworkX graph only |
+| `GET` | `/api/v1/reasoning` | AI connection reasoning JSON |
+| `POST` | `/api/v1/analyze` | Upload file → `{ job_id }` |
+| `GET` | `/api/v1/jobs/{id}` | Poll pipeline job |
+| `POST` | `/api/v1/chat` | `{ "question": "..." }` → grounded answer |
 
-**Example — upload and poll:**
+**Upload & poll:**
 ```bash
-curl -X POST http://localhost:8000/api/v1/analyze -F "file=@data/raw/your-drawing.pdf"
-# → {"job_id":"...","status":"pending"}
+curl -X POST http://localhost:8000/api/v1/analyze \
+  -F "file=@data/raw/your-drawing.pdf"
 
 curl http://localhost:8000/api/v1/jobs/<job_id>
-# → {"status":"completed","result":{...}}
 ```
 
-**Example — get AI reasoning:**
-```bash
-curl http://localhost:8000/api/v1/reasoning
-# → {"drawing_summary":"...","connections":[{"from_component":{...},"to_component":{...},"reason":"..."},...],"process_flows":[...]}
-```
-
-**Example — chat:**
+**Chat:**
 ```bash
 curl -X POST http://localhost:8000/api/v1/chat \
   -H "Content-Type: application/json" \
   -d '{"question":"List all equipment tags"}'
 ```
 
----
-
-## 📊 Data Schemas & JSON Output Artifacts
-
-Execution of `analyze_drawing()` exports 8 intermediate and final JSON files to `data/outputs/`:
-
-1. **`ocr_results.json`**: Raw OCR detections with tile-mapped global bounding boxes.
-2. **`classified_text.json`**: Categorized OCR text (`PIPE_TAG`, `EQUIPMENT_TAG`, `INSTRUMENT_TAG`, etc.).
-3. **`lines.json`**: Vector line segments with start/end coordinates, length, orientation, and type.
-4. **`objects.json`**: Enriched symbol detections with associated nearest text metadata.
-5. **`relationships.json`**: Extracted topology pairs (`from_id`, `to_id`, `relationship`, `distance`, `confidence`).
-6. **`graph.json`**: Full NetworkX graph export with node/edge attribute maps.
-7. **`ai_reasoning.json`**: AI structured reasoning — connection explanations with engineering rationale and process flow paths.
-8. **`final_analysis.json`**: Consolidated single JSON payload containing the complete drawing intelligence model (including `ai_reasoning`).
-
-### Key Schema Snippet (`DetectedLine` & `SpatialRelationship`)
-
-```python
-class DetectedLine(BaseModel):
-    id: str                             # e.g., "LINE-0042"
-    start: tuple[float, float]          # Global (x, y)
-    end: tuple[float, float]            # Global (x, y)
-    length: float                       # Pixel length
-    orientation: str                    # "horizontal", "vertical", "diagonal"
-    line_type: str                      # "LIKELY_PIPE", "DIMENSION", "BORDER"
-    confidence: float                   # Score 0.0 - 1.0
-    source_method: str = "opencv_hough"
-
-class SpatialRelationship(BaseModel):
-    from_id: str                        # e.g., "OBJ-0001"
-    to_id: str                          # e.g., "TXT-022-0012"
-    relationship: str                   # "annotated_by", "connected_to", "near"
-    distance: float                     # Distance in pixels
-    confidence: float                   # Score 0.0 - 1.0
-```
-
-### 🆕 AI Reasoning Schema (`ai_reasoning.json`)
-
-```json
-{
-  "drawing_summary": "P&ID showing a gas compression system with...",
-  "connections": [
-    {
-      "from_component": { "id": "OBJ-001", "tag": "V-100", "type": "VALVE" },
-      "to_component": { "id": "OBJ-005", "tag": "P-200", "type": "PUMP" },
-      "connection_type": "pipe",
-      "flow_direction": "P-200 → V-100",
-      "reason": "Valve V-100 is on the discharge line of Pump P-200, regulating flow to the downstream heat exchanger.",
-      "confidence": 0.92,
-      "line_ids": ["LINE-042", "LINE-043"]
-    }
-  ],
-  "process_flows": [
-    {
-      "flow_name": "Main Gas Compression Loop",
-      "path": ["E-100 (Inlet Separator)", "K-200 (Compressor)", "E-300 (Cooler)", "V-400 (Discharge)"],
-      "description": "Gas enters the inlet separator, passes through the compressor, is cooled, and exits via the discharge valve."
-    }
-  ],
-  "ai_model": "gemini-2.5-flash",
-  "timestamp": "2026-08-14T23:00:00Z"
-}
-```
+</details>
 
 ---
 
-## 🧪 Testing & Quality Assurance
+## 🔬 Pipeline (Steps 1–14)
 
-The platform features an automated unit test suite covering geometry math, coordinate transforms, OCR data schemas, classifier rules, graph topology building, and pipeline orchestration.
+<details>
+<summary><b>🗂️ Click to expand full pipeline table</b></summary>
 
-Run the test suite with PyTest:
+<br/>
+
+| Stage | Module | Output |
+|:-----:|:-------|:-------|
+| 1–2 | `preprocessing.image_processor` | Clean high-res image |
+| 3–4 | `preprocessing.tiling` | 1024² tile grid |
+| 5 | `ocr.ocr_engine` | `ocr_results.json` |
+| 6 | `ocr.text_classifier` | `classified_text.json` |
+| 7 | `geometry.line_detector` | `lines.json` |
+| 8 | `detection.symbol_detector` | `objects.json` |
+| 9 | `spatial.relationship_engine` | `relationships.json` |
+| 10 | `graph.drawing_graph` | `graph.json` |
+| 11 | `services.gemini_service` | `ai_reasoning.json` |
+| 12 | `services.grok_service` | Grounded QA |
+| 13 | `pipeline.drawing_pipeline` | `final_analysis.json` |
+| 14 | `api.main` | REST over HTTP |
+
+</details>
+
+<details>
+<summary><b>📊 JSON artifacts (8 files)</b></summary>
+
+<br/>
+
+```
+data/outputs/
+├── ocr_results.json
+├── classified_text.json
+├── lines.json
+├── objects.json
+├── relationships.json
+├── graph.json
+├── ai_reasoning.json      ← AI connection explanations
+└── final_analysis.json    ← consolidated payload
+```
+
+</details>
+
+---
+
+## 🛠️ Installation
+
+<details>
+<summary><b>📦 Prerequisites & setup (click to expand)</b></summary>
+
+<br/>
+
+**Prerequisites**
+- Python 3.10+
+- Node.js 18+
+- Poppler (`poppler-utils` / `brew install poppler` / Windows binaries in PATH)
+
+**Setup**
+```bash
+git clone https://github.com/manasshete/Vector-PID.git && cd Vector-PID
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+cd client && npm install && cd ..
+cp .env.example .env
+```
+
+**`.env`**
+```env
+GROK_API_KEY=your_groq_api_key_here
+GROK_BASE_URL=https://api.groq.com/openai/v1
+GROK_MODEL=llama-3.3-70b-versatile
+```
+
+</details>
+
+<details>
+<summary><b>🚀 CLI usage — individual pipeline stages</b></summary>
+
+<br/>
+
+```bash
+# Full pipeline
+python scripts/11_end_to_end_pipeline.py
+
+# Individual stages
+python scripts/05_text_classification.py
+python scripts/06_line_detection.py
+python scripts/07_symbol_detection.py
+python scripts/08_spatial_reasoning.py
+python scripts/09_graph_construction.py
+python scripts/10_grok_analysis.py
+```
+
+</details>
+
+---
+
+## 📁 Repository Structure
+
+<details>
+<summary><b>🗃️ Click to expand tree</b></summary>
+
+<br/>
+
+```text
+engineering-drawing-intelligence/
+├── src/
+│   ├── api/              # FastAPI REST server
+│   ├── detection/        # Symbol detector
+│   ├── geometry/         # Line detector
+│   ├── graph/            # NetworkX topology
+│   ├── ocr/              # EasyOCR + classifier
+│   ├── pipeline/         # analyze_drawing()
+│   ├── preprocessing/    # PDF load + tiling
+│   ├── services/         # Grok + AI reasoning
+│   └── spatial/          # Relationship engine
+├── client/               # React + Three.js UI
+│   └── src/lib/pidScene.js
+├── scripts/              # CLI + run_api.py
+├── tests/                # 88 pytest tests
+└── data/
+    ├── raw/              # Input P&IDs
+    └── outputs/          # JSON artifacts
+```
+
+</details>
+
+---
+
+## 🧪 Testing
+
 ```bash
 python -m pytest tests/ -v
 ```
 
-### Test Suite Summary (`88 passed`)
-- `tests/test_geometry_utils.py`: Line intersection, point-to-line distance, collinear line merging.
-- `tests/test_line_detector.py`: Synthetic edge detection and line orientation checks.
-- `tests/test_symbol_detector.py`: Contour heuristic tests and confidence boundary assertions.
-- `tests/test_spatial_analyzer.py`: Deduplication of tile overlap text & proximity calculations.
-- `tests/test_drawing_graph.py`: NetworkX graph construction & BFS path tracing (`trace_from_object`).
-- `tests/test_pipeline.py`: End-to-end pipeline mocking and artifact generation.
-- `tests/test_text_classifier.py`: 36 regex tests for P&ID text classification.
-- `tests/test_ocr.py`: BoundingBox coordinate translation tests.
-- `tests/test_tiling.py`: Grid calculation and loss-free coordinate mapping tests.
-- `tests/test_gemini_reasoning.py`: 🆕 16 tests — AI reasoning Pydantic models, image helpers, Gemini service init, and pipeline graceful fallback.
+<details>
+<summary><b>✅ Test suite breakdown (88 passed)</b></summary>
+
+<br/>
+
+| Module | Coverage |
+|--------|----------|
+| `test_geometry_utils.py` | Line math, collinear merge |
+| `test_line_detector.py` | Hough + orientation |
+| `test_symbol_detector.py` | Contour heuristics |
+| `test_spatial_analyzer.py` | Proximity + dedup |
+| `test_drawing_graph.py` | NetworkX + BFS trace |
+| `test_pipeline.py` | End-to-end orchestration |
+| `test_text_classifier.py` | 36 regex P&ID rules |
+| `test_gemini_reasoning.py` | AI reasoning models |
+| `test_ocr.py` | BBox coordinate transforms |
+| `test_tiling.py` | Zero-drift tile mapping |
+
+</details>
 
 ---
 
-## ⚠️ Honesty Disclosures & Model Limitations
+## ⚠️ Limitations
 
-- **Symbol Detector Accuracy**: `OpenCVSymbolDetector` uses traditional contour shape heuristics. On complex engineering drawings, contour analysis achieves **<40% mAP** due to overlapping line work. It serves as an architectural baseline and should be upgraded to a trained YOLOv8 / RT-DETR model for production.
-- **Line Detector Limitations**: `LineDetector` uses Hough Line Transformation. While effective for straight lines (>90% recall), it cannot easily distinguish between electrical signal lines, instrument tubing, and major process piping without deep vector learning.
-- **LLM Sub-Context Pacing**: Grok API queries in `scripts/10_grok_analysis.py` implement strict sub-context filtering and automated backoff retry logic to operate reliably within Groq API free-tier rate limits (30 RPM).
-- **AI Connection Reasoning**: The Groq LLM reasoning layer provides engineering-level connection explanations based on structured CV data. Accuracy depends on the quality of upstream detections (OCR, symbol detection, spatial relationships). The reasoning layer gracefully skips if `GROK_API_KEY` is not configured.
+<details>
+<summary><b>🔍 Honesty disclosures (click to expand)</b></summary>
+
+<br/>
+
+| Component | Reality |
+|-----------|---------|
+| **Symbol detector** | OpenCV contours — **<40% mAP** on dense P&IDs. Baseline only; needs YOLOv8/RT-DETR for production. |
+| **Line detector** | Hough transform — great for straight pipes, weak on signal/tubing distinction. |
+| **LLM pacing** | Groq free tier ~30 RPM — sub-context filtering + backoff retry built in. |
+| **AI reasoning** | Quality depends on upstream OCR/symbol accuracy. Skips gracefully without API key. |
+
+</details>
 
 ---
 
-## 🐳 Hosting & Docker Deployment
+## 🐳 Docker
 
-### Docker Containerization
+<details>
+<summary><b>🐋 Container deployment</b></summary>
 
-Vector-PID includes a pre-configured `Dockerfile` that packages Python 3.11, OpenCV C++ libraries, PyTorch, and Poppler utilities.
-
-#### Build & Run Container Locally:
+<br/>
 
 ```bash
-# 1. Build Docker image
 docker build -t vector-pid .
-
-# 2. Run end-to-end pipeline in container
-docker run --rm --env-file .env -v "${PWD}/data/outputs:/app/data/outputs" vector-pid
+docker run --rm --env-file .env \
+  -v "${PWD}/data/outputs:/app/data/outputs" vector-pid
 ```
 
-#### Cloud Deployment (Render / Railway / Fly.io / AWS)
+Allocate **≥ 1.5 GB RAM** for EasyOCR/PyTorch.
 
-1. Connect your GitHub repository (`manasshete/Vector-PID`) to your cloud PaaS.
-2. Select **Docker** as the deployment runtime.
-3. Add your environment variables (`GROK_API_KEY`, `GROK_BASE_URL`, `GROK_MODEL`).
-4. Allocate at least **1.5 GB – 2 GB RAM** for EasyOCR/PyTorch memory management.
+</details>
 
 ---
 
-## 🛣️ Production Roadmap
+## 🛣️ Roadmap
 
-- [ ] **YOLOv8 / RT-DETR Symbol Detector**: Replace OpenCV contour detector with a fine-tuned deep learning model trained on ISO 14617 / ANSI P&ID symbol datasets (>85% mAP).
-- [x] **AI Connection Reasoning**: Structured connection analysis with engineering reasoning via Groq LLM — explains which parts connect, why, and traces process flows.
-- [x] **FastAPI REST Server**: `POST /api/v1/analyze`, `GET /api/v1/graph`, `GET /api/v1/reasoning`, `POST /api/v1/chat`, job polling.
-- [x] **React Three.js Canvas UI**: Interactive web viewer with layer toggles, topology graph, JSON inspector, and Grok chat.
-- [ ] **Multi-Sheet PDF Linker**: Parse matchline text (`SEE DWG-XXXX`) to link cross-drawing process flows into a unified graph.
-- [ ] **Production CORS & Auth**: Token-based API auth and configurable allowed origins for deployed frontends.
+<div align="center">
+
+| Status | Item |
+|:------:|:-----|
+| ✅ | AI connection reasoning (Groq LLM) |
+| ✅ | FastAPI REST server + job polling |
+| ✅ | React Three.js canvas UI |
+| ⬜ | YOLOv8 / RT-DETR symbol detector (>85% mAP) |
+| ⬜ | Multi-sheet PDF linker (`SEE DWG-XXXX`) |
+| ⬜ | Production auth + CORS |
+
+</div>
 
 ---
 
-## 📜 License
+<div align="center">
 
-Distributed under the MIT License. See `LICENSE` for details.
+<br/>
 
----
+<!-- Footer wave -->
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:1c2430,100:0f6e56&height=100&section=footer&text=Built%20by%20Manas%20Shete&fontSize=20&fontColor=ffffff&animation=rotate" width="100%"/>
 
-**Author**: [Manas Shete](https://github.com/manasshete)  
-**Project**: Vector-PID Platform
+<br/>
+
+[![GitHub](https://img.shields.io/badge/GitHub-manasshete-181717?style=flat-square&logo=github)](https://github.com/manasshete)
+[![MIT License](https://img.shields.io/badge/License-MIT-F59E0B?style=flat-square)](LICENSE)
+
+**Vector-PID** — Engineering Drawing Intelligence Platform
+
+<sub>MIT License · Python-First · Full Stack</sub>
+
+</div>
