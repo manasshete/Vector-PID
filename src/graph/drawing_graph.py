@@ -150,3 +150,31 @@ class DrawingGraph:
             "nodes": nodes,
             "edges": edges,
         }
+
+    def find_path(self, source_id: str, target_id: str) -> list[str]:
+        """Find the shortest path between two nodes using Dijkstra / BFS."""
+        if source_id not in self.graph or target_id not in self.graph:
+            return []
+        try:
+            return nx.shortest_path(self.graph, source=source_id, target=target_id)
+        except (nx.NetworkXNoPath, nx.NodeNotFound):
+            return []
+
+    def get_subgraph(self, node_ids: list[str]) -> dict:
+        """Extract a filtered subgraph for the specified node IDs."""
+        valid_nodes = [n for n in node_ids if n in self.graph]
+        sub = self.graph.subgraph(valid_nodes)
+        
+        nodes = [{"id": n, **attrs} for n, attrs in sub.nodes(data=True)]
+        edges = [{"from_id": u, "to_id": v, **attrs} for u, v, attrs in sub.edges(data=True)]
+        return {
+            "num_nodes": sub.number_of_nodes(),
+            "num_edges": sub.number_of_edges(),
+            "nodes": nodes,
+            "edges": edges,
+        }
+
+    def get_connected_components(self) -> list[list[str]]:
+        """Return list of connected node component clusters."""
+        return [list(c) for c in nx.connected_components(self.graph)]
+
