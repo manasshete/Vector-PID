@@ -5,7 +5,7 @@ import math
 from typing import Optional
 
 import numpy as np
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from src.models.schemas import BoundingBox
 
@@ -23,10 +23,9 @@ class TileMetadata(BaseModel):
 
 class TileResult(BaseModel):
     """A tile image paired with its metadata. Image excluded from serialization."""
-    metadata: TileMetadata
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
-    class Config:
-        arbitrary_types_allowed = True
+    metadata: TileMetadata
 
     # Image stored as instance attribute, not Pydantic field (not serializable)
     _image: np.ndarray = None
