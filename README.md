@@ -7,7 +7,7 @@
 
 <!-- ─── Animated Multi-Line Typing Subtitle ─── -->
 <a href="#-what-vector-pid-does">
-  <img src="https://readme-typing-svg.demolab.com/?font=JetBrains+Mono&weight=700&size=26&duration=2800&pause=600&color=00FFC8&center=true&vCenter=true&multiline=false&width=760&height=60&lines=🔬+Deterministic+P%26ID+Topology+Extraction;🧠+Groq+LLM+AI+Connection+Reasoning;🌐+Three.js+Interactive+3D+Viewer;⚡+FastAPI+%2B+React+Full+Stack+Platform;📊+633+Texts+·+515+Symbols+·+6118+Edges" alt="Typing SVG Animation"/>
+  <img src="https://readme-typing-svg.demolab.com/?font=Fira+Code&weight=600&size=24&duration=3000&pause=800&color=00FFC8&center=true&vCenter=true&multiline=false&width=720&height=50&lines=Deterministic+P%26ID+Topology+Extraction;Groq+LLM+AI+Connection+Reasoning;Three.js+Interactive+3D+Viewer;FastAPI+%2B+React+Full+Stack+Platform;633+Texts+%7C+515+Symbols+%7C+6118+Edges" alt="Typing SVG Animation"/>
 </a>
 
 <br/>
@@ -75,10 +75,12 @@
 <tr>
 <td align="center" width="25%">
 
-<img src="https://readme-typing-svg.demolab.com/?font=JetBrains+Mono&size=34&duration=1000&pause=9999&color=00FFC8&center=true&vCenter=true&width=80&height=70&lines=🔲" alt="Tiling Icon"/>
+<br/>
+
+<img src="https://img.shields.io/badge/TILING-1024%C2%B2-00ffc8?style=for-the-badge&logoColor=black&labelColor=0d1117" alt="Tiling Badge"/>
 
 ### 🔲 Zero-Drift Tiling
-<sub>1024² overlapping tile grid<br/>Loss-free `local ⇄ global` map</sub>
+<sub>1024² overlapping tile grid<br/>Loss-free <code>local ⇄ global</code> map</sub>
 
 <br/>
 
@@ -87,7 +89,9 @@
 </td>
 <td align="center" width="25%">
 
-<img src="https://readme-typing-svg.demolab.com/?font=JetBrains+Mono&size=34&duration=1000&pause=9999&color=38bdf8&center=true&vCenter=true&width=80&height=70&lines=📐" alt="CV Icon"/>
+<br/>
+
+<img src="https://img.shields.io/badge/CV_VISION-OCR%20%2B%20Hough-38bdf8?style=for-the-badge&logo=opencv&logoColor=white&labelColor=0d1117" alt="CV Badge"/>
 
 ### 📐 Deterministic CV
 <sub>EasyOCR text + Hough line segments + OpenCV contours</sub>
@@ -99,7 +103,9 @@
 </td>
 <td align="center" width="25%">
 
-<img src="https://readme-typing-svg.demolab.com/?font=JetBrains+Mono&size=34&duration=1000&pause=9999&color=a855f7&center=true&vCenter=true&width=80&height=70&lines=🕸️" alt="Topology Icon"/>
+<br/>
+
+<img src="https://img.shields.io/badge/TOPOLOGY-NetworkX-a855f7?style=for-the-badge&logoColor=white&labelColor=0d1117" alt="Topology Badge"/>
 
 ### 🕸️ Graph Topology
 <sub>NetworkX spatial graph<br/>6118 edges · BFS path tracing</sub>
@@ -111,7 +117,9 @@
 </td>
 <td align="center" width="25%">
 
-<img src="https://readme-typing-svg.demolab.com/?font=JetBrains+Mono&size=34&duration=1000&pause=9999&color=f59e0b&center=true&vCenter=true&width=80&height=70&lines=🧠" alt="AI Icon"/>
+<br/>
+
+<img src="https://img.shields.io/badge/REASONING-Groq%20LLM-f59e0b?style=for-the-badge&logo=openai&logoColor=white&labelColor=0d1117" alt="AI Badge"/>
 
 ### 🧠 Grounded AI
 <sub>Groq LLM connection reasoning<br/>Zero hallucination QA citations</sub>
@@ -145,7 +153,7 @@ Process engineering drawings (P&IDs) are massive, high-density vector PDFs (typi
 
 ## ⚡ Quick Start
 
-<img src="https://readme-typing-svg.demolab.com/?font=JetBrains+Mono&size=15&duration=2000&pause=500&color=00FFC8&center=false&vCenter=true&width=620&height=32&lines=⚡+Get+up+and+running+in+less+than+60+seconds!" alt="Quick start terminal typing"/>
+<img src="https://readme-typing-svg.demolab.com/?font=Fira+Code&size=14&duration=2500&pause=600&color=00FFC8&center=false&vCenter=true&width=620&height=30&lines=Clone+--%3E+Install+--%3E+Configure+--%3E+Launch+in+under+60+seconds!" alt="Quick start terminal typing"/>
 
 <table>
 <tr>
@@ -228,7 +236,7 @@ GROK_MODEL=llama-3.3-70b-versatile
 ## 🏗️ Live Architecture
 
 <div align="center">
-  <img src="https://readme-typing-svg.demolab.com/?font=JetBrains+Mono&size=15&duration=2500&pause=600&color=a855f7&center=true&vCenter=true&width=700&height=32&lines=📄+Vector+PDF+→+🔬+Tiling+%26+CV+→+🕸️+Graph+Topology+→+🤖+AI+Reasoning+→+🌐+3D+Viewer" alt="Architecture flow"/>
+  <img src="https://readme-typing-svg.demolab.com/?font=Fira+Code&size=15&duration=3000&pause=800&color=a855f7&center=true&vCenter=true&width=700&height=30&lines=Input+PDF+--%3E+CV+Pipeline+--%3E+Graph+Topology+--%3E+AI+Reasoning+--%3E+Web+UI" alt="Architecture flow"/>
 </div>
 
 ```mermaid
@@ -362,7 +370,7 @@ sequenceDiagram
 ## 🔬 14-Stage Pipeline
 
 <div align="center">
-  <img src="https://readme-typing-svg.demolab.com/?font=JetBrains+Mono&size=14&duration=2000&pause=400&color=00FFC8&center=true&vCenter=true&width=750&height=28&lines=14+Deterministic+Stages+·+Full+Mathematical+Traceability+·+8+JSON+Artifacts" alt="14 stage animation"/>
+  <img src="https://readme-typing-svg.demolab.com/?font=Fira+Code&size=14&duration=2500&pause=600&color=00FFC8&center=true&vCenter=true&width=700&height=28&lines=14+Deterministic+Stages+%7C+Full+Traceability+%7C+8+JSON+Artifacts" alt="14 stage animation"/>
 </div>
 
 <details open>
@@ -511,7 +519,7 @@ curl http://localhost:8000/api/v1/graph | python -m json.tool
 ## 🧪 Testing
 
 <div align="center">
-  <img src="https://readme-typing-svg.demolab.com/?font=JetBrains+Mono&size=15&duration=2000&pause=500&color=22C55E&center=true&vCenter=true&width=620&height=30&lines=✅+88+Automated+PyTest+Tests+Passing+·+10+Modules+Covered" alt="Tests animation"/>
+  <img src="https://readme-typing-svg.demolab.com/?font=Fira+Code&size=15&duration=2500&pause=600&color=22C55E&center=true&vCenter=true&width=620&height=30&lines=88+Automated+PyTest+Tests+Passing+%7C+10+Modules+Covered" alt="Tests animation"/>
 </div>
 
 ```bash
@@ -588,7 +596,7 @@ docker logs -f vector-pid-app
 ## 🛣️ Roadmap
 
 <div align="center">
-  <img src="https://readme-typing-svg.demolab.com/?font=JetBrains+Mono&size=15&duration=3000&pause=800&color=f59e0b&center=true&vCenter=true&width=700&height=30&lines=Building+Next-Gen+AI+for+Industrial+Engineering+Drawings...🚀" alt="Roadmap animation"/>
+  <img src="https://readme-typing-svg.demolab.com/?font=Fira+Code&size=15&duration=3000&pause=800&color=f59e0b&center=true&vCenter=true&width=700&height=30&lines=Building+Next-Gen+AI+for+Industrial+Engineering+Drawings..." alt="Roadmap animation"/>
 </div>
 
 <div align="center">
